@@ -199,7 +199,37 @@ body {
     justify-content: space-between;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
+/* Password Visibility Toggle Styles */
+.input-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
+.input-icon-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Creates safe space so text doesn't hide behind the icon */
+}
+
+.toggle-visibility {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.toggle-visibility:hover {
+    transform: scale(1.1);
+    filter: brightness(0.8);
+}
 /* Functional UI forms / Main Editor containers */
 .main {
     max-width: 1000px;
@@ -223,8 +253,20 @@ body {
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 .field { margin-bottom: 20px; }
 .field label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--g-text); }
-input[type="text"], input[type="email"], select, input[type="file"] {
-    width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 1rem;
+input[type="text"], input[type="password"], input[type="email"], select, input[type="file"] {
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #dadce0; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-family: inherit; 
+    font-size: 1rem;
+    letter-spacing: normal;
+}
+
+/* Slightly space out the password dots so they aren't squished together */
+input[type="password"] {
+    letter-spacing: 2px;
 }
 
 .button {
