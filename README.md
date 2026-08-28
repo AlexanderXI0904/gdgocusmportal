@@ -89,5 +89,5 @@ Contributions are welcome! If you are new to GitHub or open-source collaboration
 5. **Push to your Fork:**
     ```bash
     git push origin feature/your-amazing-feature
-    Open a Pull Request: Navigate back to the original repository on GitHub and click "Compare & pull request" to submit your changes for review.
     ```
+Open a Pull Request: Navigate back to the original repository on GitHub and click "Compare & pull request" to submit your changes for review.
