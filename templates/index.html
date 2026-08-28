@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDGoC Email Sender</title>
+    
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+</head>
+
+<body 
+    data-page="{{ page|default(1) }}" 
+    data-sent="{{ sent|default(0) }}" 
+    data-failed="{{ failed|default(0) }}"
+    data-has-config="{% if authenticated or excel_filename or sheets %}true{% else %}false{% endif %}"
+>
+
+<header class="g-header">
+    <div class="user-logo">
+        <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
+    </div>
+    
+    <div class="g-logo">
+        <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo">
+    </div>
+</header>
+
+<div class="app">
+
+    <div style="max-width: 1000px; margin: 15px auto; width: 100%; box-sizing: border-box; padding: 0 20px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% if page == 1 %}
+
+    <div class="landing-hero" id="hero">
+        <h1>GDGoC USM Email Application</h1>
+        <button class="get-started-btn" onclick="scrollToCampaigns()">
+            Get Started 
+        </button>
+    </div>
+
+    <div class="campaigns-section" id="campaigns">
+        
+        <div class="campaigns-header">
+            <h2>Your Campaigns</h2>
+            <button class="add-campaign-btn" onclick="toggleNewCampaign()" title="Create New Campaign">+</button>
+        </div>
+
+        <ul id="campaign-list">
+            <li class="campaign-item" style="justify-content: center; color: #70757a; font-style: italic;">
+                No campaigns generated in this session yet.
+            </li>
+        </ul>
+
+        <div id="new-campaign-container" class="mt-50 {% if not (authenticated or excel_filename or sheets) %}hidden{% endif %}">
+            
+            <div class="page-header" style="margin-bottom: 30px;">
+                <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">New Campaign Configuration</h1>
+                <p style="color: #5f6368; margin: 0;">Authenticate with Microsoft and select your Excel data source.</p>
+            </div>
+
+            <section class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Microsoft Authentication</h2>
+                        <p>Connect your Microsoft account before sending emails.</p>
+                    </div>
+                    {% if authenticated %}
+                        <span class="status success">● Authenticated</span>
+                    {% else %}
+                        <span class="status">● Not authenticated</span>
+                    {% endif %}
+                </div>
+
+                <form action="{{ url_for('save_ms_settings') }}" method="POST">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>Client ID</label>
+                            <input type="text" name="client_id" value="{{ settings.client_id }}" placeholder="Application (client) ID" required>
+                        </div>
+                        <div class="field">
+                            <label>Tenant ID</label>
+                            <input type="text" name="tenant_id" value="{{ settings.tenant_id }}" placeholder="Directory (tenant) ID" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="button secondary">Save Microsoft Settings</button>
+                </form>
+
+                {% if settings.client_id and settings.tenant_id %}
+                    <div class="auth-row">
+                        {% if authenticated %}
+                            <div class="authenticated-box">✓ Microsoft account authenticated</div>
+                            <a href="{{ url_for('logout') }}" class="button outline">Sign Out</a>
+                        {% else %}
+                            <a href="{{ url_for('authenticate') }}" class="button primary">Authenticate with Microsoft</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </section>
+
+            {% if authenticated %}
+            <section class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Excel Data Source</h2>
+                        <p>Upload the Excel workbook containing your recipients.</p>
+                    </div>
+                    {% if excel_filename %}
+                        <span class="status success">✓ {{ excel_filename }}</span>
+                    {% endif %}
+                </div>
+
+                <form action="{{ url_for('upload_excel') }}" method="POST" enctype="multipart/form-data">
+                    <div style="border: 2px dashed #dadce0; padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 20px; background: #fafafa;">
+                        <input type="file" name="file" accept=".xlsx,.xlsm" required style="border: none; background: none; max-width: 300px; margin: 0 auto; display: block;">
+                        <p style="margin: 10px 0 0 0; color: #5f6368;">.xlsx or .xlsm</p>
+                    </div>
+                    <button type="submit" class="button primary">Upload Excel</button>
+                </form>
+            </section>
+
+            {% if sheets %}
+            <section class="card">
+                <div class="card-header">
+                    <h2>Select Worksheet</h2>
+                    <p>Choose the worksheet containing your email data.</p>
+                </div>
+
+                <form action="{{ url_for('select_sheet') }}" method="POST">
+                    <div class="sheet-selector" style="margin-bottom: 25px;">
+                        {% for sheet in sheets %}
+                        <label class="sheet-option {% if sheet == selected_sheet %}selected{% endif %}">
+                            <input type="radio" name="sheet_name" value="{{ sheet }}" {% if sheet == selected_sheet %}checked{% endif %} onchange="this.form.submit()">
+                            <span>{{ sheet }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </form>
+
+                {% if selected_sheet and columns %}
+                <div style="background: var(--g-white); padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #dadce0;">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Detected Data Columns</h3>
+                    <div>
+                        {% for column in columns %}
+                            <span class="column-chip">{{ column }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="bottom-actions" style="margin-top: 0;">
+                    <a href="{{ url_for('editor') }}" class="button primary" style="width: 100%;">Continue to Email Editor →</a>
+                </div>
+                {% endif %}
+            </section>
+            {% endif %}
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    {% elif page == 2 %}
+    <main class="main">
+        <div class="page-header" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Email Editor</h1>
+                <p style="color: #5f6368; margin: 0;">Compose your email and insert dynamic Excel fields.</p>
+            </div>
+            
+            <div>
+                <input type="file" id="importCampaignFile" accept=".json" style="display: none;" onchange="importCampaign(event)">
+                <button type="button" class="button outline" style="padding: 10px 20px; font-weight: bold; margin-right: 10px;" onclick="document.getElementById('importCampaignFile').click()">
+                    📥 Load Campaign
+                </button>
+                <button type="button" class="button outline" style="padding: 10px 20px; font-weight: bold;" onclick="exportCampaign()">
+                    💾 Save Campaign
+                </button>
+            </div>
+        </div>
+
+        <form action="{{ url_for('preview') }}" method="POST" id="emailForm">
+            <section class="card">
+                <div class="card-header">
+                    <h2>Email Details</h2>
+                    <p>Configure your email metadata.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Subject</label>
+                        <input type="text" name="subject" id="subject" placeholder="Sponsorship Invitation" required>
+                    </div>
+                    <div class="field">
+                        <label>Importance</label>
+                        <select name="importance">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field" style="border-top: 1px solid #dadce0; padding-top: 20px;">
+                    <label>CC Recipients</label>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                        {% for email in cc_emails %}
+                        <label style="background: #e8f0fe; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--g-blue); cursor: pointer;">
+                            <input type="checkbox" name="cc" value="{{ email }}">
+                            <span style="color: var(--g-blue);">{{ email }}</span>
+                        </label>
+                        {% else %}
+                        <p style="color: #70757a; font-style: italic; margin: 0;">No saved CC addresses.</p>
+                        {% endfor %}
+                    </div>
+                    <div style="display: flex; gap: 10px; max-width: 400px;">
+                        <input type="email" id="newCc" placeholder="Add new CC email">
+                        <button type="button" class="button secondary" onclick="addCc()">Add</button>
+                    </div>
+                    <div id="newCcContainer" style="margin-top: 10px;"></div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h2>Recipient Mapping</h2>
+                    <p>Select the Excel column containing recipient email addresses.</p>
+                </div>
+                <div class="field">
+                    <select name="email_column" required style="max-width: 400px;">
+                        <option value="">Select a column...</option>
+                        {% for column in columns %}
+                            <option value="{{ column }}">{{ column }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </section>
+
+            <section class="card editor-card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Message Body</h2>
+                        <p>Write your email visually or edit the HTML directly.</p>
+                    </div>
+                    <button type="button" class="button outline" onclick="toggleEditor()" id="editorToggle">HTML View</button>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dadce0; margin-bottom: 20px;">
+                    <strong style="display: block; margin-bottom: 10px;">Dynamic content (Click to insert):</strong>
+                    <div class="dynamic-fields">
+                        {% for column in columns %}
+                            <button type="button" class="dynamic-field" data-column="{{ column }}" onclick="insertDynamic(this.dataset.column)">
+                                {{ column }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="wysiwygEditor" class="wysiwyg" contenteditable="true">
+                    <p>Greetings,</p>
+                    <p><strong>{{ "{{" }}CompanyName{{ "}}" }}</strong></p>
+                    <p>We are pleased to invite you to participate in our event.</p>
+                    <p>Best regards,<br>GDGoC USM</p>
+                </div>
+                <textarea id="htmlEditor" name="html" class="html-editor" hidden></textarea>
+                <div style="text-align: right; color: #5f6368; font-size: 0.9rem;"><span id="editorMode">Visual Editor Active</span></div>
+            </section>
+
+            <div class="bottom-actions">
+                <a href="{{ url_for('index') }}" class="button outline">← Back to Settings</a>
+                <button type="submit" class="button primary">Preview Email →</button>
+            </div>
+        </form>
+    </main>
+
+
+    {% elif page == 3 %}
+    <main class="main">
+        <div class="page-header" style="margin-bottom: 30px;">
+            <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Preview & Confirmation</h1>
+            <p style="color: #5f6368; margin: 0;">Review the message and recipients before sending.</p>
+        </div>
+
+        <section class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+            <div class="summary-grid">
+                <div><span>Subject</span><strong>{{ subject }}</strong></div>
+                <div><span>Importance</span><strong>{{ importance|capitalize }}</strong></div>
+                <div><span>Worksheet</span><strong>{{ sheet_name }}</strong></div>
+                <div><span>Recipients</span><strong>{{ recipient_count }}</strong></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>Email Preview</h2>
+                <p>Dynamic placeholders are shown before Excel values are inserted.</p>
+            </div>
+            <div style="border: 1px solid #dadce0; border-radius: 6px; overflow: hidden;">
+                <div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dadce0;">
+                    <strong>Subject: </strong> {{ subject }}
+                </div>
+                <div style="padding: 20px; background: #ffffff;">
+                    {{ html|safe }}
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>Targeted Recipients</h2>
+                    <p>The following addresses will receive the email.</p>
+                </div>
+                <span class="status">{{ recipient_count }} recipients found</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                {% for email in recipients %}
+                    <div style="background: var(--g-white); padding: 10px; border-radius: 4px; border: 1px solid #dadce0; text-align: center;">{{ email }}</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="card" style="border: 2px solid var(--g-red); background: #fffcfc;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: var(--g-red); margin: 0 0 10px 0;">Ready to send?</h2>
+                <p style="color: #5f6368; margin: 0;">This action will immediately send <strong>{{ recipient_count }}</strong> emails via Microsoft Graph.</p>
+            </div>
+            <form action="{{ url_for('send_emails') }}" method="POST" onsubmit="return confirm('Are you sure you want to send these emails?');" style="text-align: center;">
+                <input type="hidden" name="subject" value="{{ subject }}">
+                <input type="hidden" name="importance" value="{{ importance }}">
+                <input type="hidden" name="html" value="{{ html }}">
+                <input type="hidden" name="email_column" value="{{ email_column }}">
+                {% for c in cc %}
+                    <input type="hidden" name="cc" value="{{ c }}">
+                {% endfor %}
+                <button type="submit" class="button danger" style="font-size: 1.2rem; padding: 15px 40px;">Send {{ recipient_count }} Emails Now</button>
+            </form>
+        </section>
+
+        <div class="bottom-actions">
+            <a href="{{ url_for('editor') }}" class="button outline">← Back to Email Editor</a>
+        </div>
+    </main>
+
+
+    {% elif page == 4 %}
+    <main class="main">
+        <div class="page-header" style="margin-bottom: 30px; text-align: center;">
+            <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Sending Complete</h1>
+            <p style="color: #5f6368; margin: 0;">Microsoft Graph email dispatch has finished processing.</p>
+        </div>
+
+        <section class="result-summary">
+            <div class="result-box" style="border-top: 5px solid var(--g-green);">
+                <strong>{{ sent }}</strong>
+                <span style="color: var(--g-green); font-weight: bold;">Emails Sent</span>
+            </div>
+            <div class="result-box" style="border-top: 5px solid var(--g-red);">
+                <strong>{{ failed }}</strong>
+                <span style="color: var(--g-red); font-weight: bold;">Emails Failed</span>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>Detailed Log</h2>
+            </div>
+            <div>
+                {% for result in results %}
+                    <div class="result-row">
+                        <span style="color: var(--g-text);">{{ result.email }}</span>
+                        <strong class="{% if result.status == 'Sent' %}result-success{% else %}result-failed{% endif %}">
+                            {{ result.status }}
+                        </strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="{{ url_for('index') }}" class="button primary" style="padding: 15px 40px; font-size: 1.1rem;">Start New Campaign</a>
+        </div>
+    </main>
+    {% endif %}
+
+</div>
+
+<footer class="g-footer">
+    All rights reserved. GDGoC USM Email Application
+</footer>
+
+<script>
+let htmlMode = false;
+let codeMirrorEditor = null;
+
+// ==========================================
+// UI TRANSITION LOGIC (HERO FADE OUT)
+// ==========================================
+window.addEventListener('scroll', () => {
+    const hero = document.getElementById('hero');
+    if (hero) {
+        const scrollPos = window.scrollY;
+
+        // 1. Toggle the bottom border gradient fade overlay
+        if (scrollPos > 15) {
+            hero.classList.add('is-scrolling');
+        } else {
+            hero.classList.remove('is-scrolling');
+        }
+
+        // 2. Fade out ONLY the text and button, keeping the background solid
+        const heroHeight = hero.offsetHeight;
+        let textOpacity = 1 - (scrollPos / (heroHeight * 0.5)); // Fades slightly faster
+        
+        // Loop through the inner content (h1, button) to fade them independently
+        Array.from(hero.children).forEach(child => {
+            child.style.opacity = Math.max(0, textOpacity);
+        });
+    }
+});
+
+// ==========================================
+// IMPORT & EXPORT SAVED CAMPAIGN LOGIC
+// ==========================================
+function exportCampaign() {
+    const subject = document.getElementById("subject").value;
+    const importance = document.querySelector("select[name='importance']").value;
+    const emailCol = document.querySelector("select[name='email_column']").value;
+    
+    let htmlContent = "";
+    if (htmlMode && codeMirrorEditor) {
+        htmlContent = codeMirrorEditor.getValue();
+    } else {
+        htmlContent = document.getElementById("wysiwygEditor").innerHTML;
+    }
+
+    const checkedCcs = Array.from(document.querySelectorAll("input[name='cc'][type='checkbox']:checked")).map(cb => cb.value);
+    const hiddenCcs = Array.from(document.querySelectorAll("input[name='cc'][type='hidden']")).map(inp => inp.value);
+    const ccList = [...new Set([...checkedCcs, ...hiddenCcs])];
+
+    const data = {
+        subject: subject,
+        importance: importance,
+        email_column: emailCol,
+        html: htmlContent,
+        cc: ccList
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "gdgoc_campaign_template.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importCampaign(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            if (data.subject !== undefined) document.getElementById("subject").value = data.subject;
+            if (data.importance !== undefined) document.querySelector("select[name='importance']").value = data.importance;
+            
+            if (data.email_column !== undefined) {
+                const sel = document.querySelector("select[name='email_column']");
+                if (Array.from(sel.options).some(opt => opt.value === data.email_column)) {
+                    sel.value = data.email_column;
+                }
+            }
+
+            if (data.html !== undefined) {
+                if (htmlMode && codeMirrorEditor) {
+                    codeMirrorEditor.setValue(data.html);
+                } else {
+                    document.getElementById("wysiwygEditor").innerHTML = data.html;
+                }
+                document.getElementById("htmlEditor").value = data.html;
+            }
+
+            if (data.cc && Array.isArray(data.cc)) {
+                document.getElementById("newCcContainer").innerHTML = "";
+                document.querySelectorAll("input[name='cc'][type='checkbox']").forEach(cb => {
+                    cb.checked = data.cc.includes(cb.value);
+                });
+                
+                data.cc.forEach(email => {
+                    const existingCb = document.querySelector(`input[name='cc'][type='checkbox'][value='${email}']`);
+                    if (!existingCb) {
+                        let container = document.getElementById("newCcContainer");
+                        let hidden = document.createElement("input"); 
+                        hidden.type = "hidden"; hidden.name = "cc"; hidden.value = email;
+                        container.appendChild(hidden);
+                        
+                        let label = document.createElement("div"); 
+                        label.style.color = "var(--g-green)";
+                        label.style.fontWeight = "bold";
+                        label.textContent = "✓ Added " + email;
+                        container.appendChild(label);
+                    }
+                });
+            }
+            
+            alert("Campaign loaded successfully!");
+        } catch (err) {
+            alert("Invalid campaign file.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ""; 
+}
+
+// ==========================================
+// Session & Editor State Preservation Tracker
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const bodyData = document.body.dataset;
+    const currentPage = parseInt(bodyData.page) || 1;
+    const hasConfigData = bodyData.hasConfig === 'true';
+
+    // Page 1 Logic
+    if (currentPage === 1) {
+        // Clear any lingering editor states if user is restarting a campaign entirely
+        sessionStorage.removeItem('gdgoc_editor_state');
+
+        const list = document.getElementById('campaign-list');
+        if (list) {
+            let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
+            if (campaigns.length > 0) {
+                list.innerHTML = '';
+                campaigns.forEach((c, index) => {
+                    list.innerHTML += `
+                        <li class="campaign-item">
+                            <span><strong style="color: var(--g-blue); font-size: 1.1rem;">Campaign ${index + 1}</strong> <span style="color: #70757a; font-size: 0.9rem; margin-left: 10px;">${c.date}</span></span>
+                            <span style="background: var(--g-white); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <strong style="color: var(--g-green)">Sent: ${c.sent}</strong> &nbsp;|&nbsp; <strong style="color: var(--g-red)">Failed: ${c.failed}</strong>
+                            </span>
+                        </li>
+                    `;
+                });
+            }
+        }
+        
+        if (hasConfigData) {
+            const campaignsSection = document.getElementById('campaigns');
+            if (campaignsSection) campaignsSection.scrollIntoView();
+        }
+    }
+
+    // Page 2 State Preservation (Restore User Input if they clicked "Back")
+    if (currentPage === 2) {
+        const savedState = sessionStorage.getItem('gdgoc_editor_state');
+        if (savedState) {
+            try {
+                const data = JSON.parse(savedState);
+                if (data.subject) document.getElementById("subject").value = data.subject;
+                if (data.importance) document.querySelector("select[name='importance']").value = data.importance;
+                
+                if (data.email_column) {
+                    const sel = document.querySelector("select[name='email_column']");
+                    if (Array.from(sel.options).some(opt => opt.value === data.email_column)) {
+                        sel.value = data.email_column;
+                    }
+                }
+                
+                if (data.html) {
+                    document.getElementById("wysiwygEditor").innerHTML = data.html;
+                    document.getElementById("htmlEditor").value = data.html;
+                }
+                
+                if (data.cc && Array.isArray(data.cc)) {
+                    document.querySelectorAll("input[name='cc'][type='checkbox']").forEach(cb => {
+                        cb.checked = data.cc.includes(cb.value);
+                    });
+                    
+                    data.cc.forEach(email => {
+                        const existingCb = document.querySelector(`input[name='cc'][type='checkbox'][value='${email}']`);
+                        if (!existingCb) {
+                            let container = document.getElementById("newCcContainer");
+                            // Avoid duplicating hidden labels on multiple backwards navigations
+                            if (!container.querySelector(`input[value='${email}']`)) {
+                                let hidden = document.createElement("input"); 
+                                hidden.type = "hidden"; hidden.name = "cc"; hidden.value = email;
+                                container.appendChild(hidden);
+                                
+                                let label = document.createElement("div"); 
+                                label.style.color = "var(--g-green)"; label.style.fontWeight = "bold"; label.style.marginTop = "5px";
+                                label.textContent = "✓ Added " + email;
+                                container.appendChild(label);
+                            }
+                        }
+                    });
+                }
+            } catch (err) {}
+        }
+    }
+
+    // Page 4 Logic
+    if (currentPage === 4) {
+        // Clear editor state memory after a successful send
+        sessionStorage.removeItem('gdgoc_editor_state');
+
+        let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
+        campaigns.push({
+            date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            sent: parseInt(bodyData.sent) || 0,
+            failed: parseInt(bodyData.failed) || 0
+        });
+        sessionStorage.setItem('gdgoc_campaigns', JSON.stringify(campaigns));
+    }
+});
+
+function scrollToCampaigns() {
+    document.getElementById('campaigns').scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleNewCampaign() {
+    const container = document.getElementById('new-campaign-container');
+    container.classList.remove('hidden');
+    container.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ==========================================
+// Existing Editor JS logic
+// ==========================================
+function addCc() {
+    let email = document.getElementById("newCc").value.trim();
+    if (!email) return;
+    
+    let container = document.getElementById("newCcContainer");
+    
+    let hidden = document.createElement("input"); 
+    hidden.type = "hidden"; 
+    hidden.name = "cc"; 
+    hidden.value = email;
+    container.appendChild(hidden);
+    
+    let label = document.createElement("div"); 
+    label.style.color = "var(--g-green)";
+    label.style.fontWeight = "bold";
+    label.style.marginTop = "5px";
+    label.textContent = "✓ Added " + email;
+    container.appendChild(label);
+    
+    document.getElementById("newCc").value = "";
+    
+    fetch("{{ url_for('save_cc') }}", {
+        method: "POST", 
+        headers: {"Content-Type": "application/x-www-form-urlencoded"}, 
+        body: "email=" + encodeURIComponent(email)
+    });
+}
+
+function insertDynamic(colName) {
+    const value = "{" + "{" + colName + "}" + "}"; 
+    
+    let subject = document.getElementById("subject");
+    if (document.activeElement === subject) {
+        let start = subject.selectionStart;
+        subject.value = subject.value.substring(0, start) + value + subject.value.substring(subject.selectionEnd);
+        subject.focus(); 
+        subject.selectionStart = subject.selectionEnd = start + value.length; 
+        return;
+    }
+    
+    if (htmlMode && codeMirrorEditor) { 
+        codeMirrorEditor.replaceSelection(value); 
+        codeMirrorEditor.focus(); 
+        return; 
+    }
+    
+    let editor = document.getElementById("wysiwygEditor"); 
+    editor.focus(); 
+    document.execCommand("insertText", false, value);
+}
+
+function toggleEditor() {
+    let visual = document.getElementById("wysiwygEditor");
+    let textarea = document.getElementById("htmlEditor");
+    let button = document.getElementById("editorToggle");
+    let modeLabel = document.getElementById("editorMode");
+    
+    if (!htmlMode) {
+        textarea.value = visual.innerHTML; 
+        textarea.hidden = false; 
+        visual.style.display = "none";
+        codeMirrorEditor = CodeMirror.fromTextArea(textarea, {
+            mode: "htmlmixed", 
+            lineNumbers: true, 
+            lineWrapping: true
+        });
+        button.innerText = "Visual View"; 
+        modeLabel.innerText = "HTML Source Active"; 
+        htmlMode = true;
+    } else {
+        visual.innerHTML = codeMirrorEditor.getValue(); 
+        codeMirrorEditor.toTextArea(); 
+        codeMirrorEditor = null;
+        textarea.hidden = true; 
+        visual.style.display = "block"; 
+        button.innerText = "HTML View"; 
+        modeLabel.innerText = "Visual Editor Active"; 
+        htmlMode = false;
+    }
+}
+
+const emailForm = document.getElementById("emailForm");
+if (emailForm) {
+    emailForm.addEventListener("submit", function() {
+        let textarea = document.getElementById("htmlEditor");
+        if (htmlMode && codeMirrorEditor) {
+            textarea.value = codeMirrorEditor.getValue();
+        } else {
+            textarea.value = document.getElementById("wysiwygEditor").innerHTML;
+        }
+
+        // SAVE FORM STATE ON SUBMIT (Before leaving Page 2)
+        const checkedCcs = Array.from(document.querySelectorAll("input[name='cc'][type='checkbox']:checked")).map(cb => cb.value);
+        const hiddenCcs = Array.from(document.querySelectorAll("input[name='cc'][type='hidden']")).map(inp => inp.value);
+        const ccList = [...new Set([...checkedCcs, ...hiddenCcs])];
+
+        const editorState = {
+            subject: document.getElementById("subject").value,
+            importance: document.querySelector("select[name='importance']").value,
+            email_column: document.querySelector("select[name='email_column']").value,
+            html: textarea.value,
+            cc: ccList
+        };
+        sessionStorage.setItem('gdgoc_editor_state', JSON.stringify(editorState));
+    });
+}
+</script>
+</body>
+</html>
