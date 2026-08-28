@@ -17,6 +17,7 @@ uploads/*
 
 # Local configuration
 config/settings.json
+settings.json
 
 # Secrets
 .env
