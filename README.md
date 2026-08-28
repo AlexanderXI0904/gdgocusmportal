@@ -16,7 +16,6 @@ Designed for Google Developer Groups on Campus (GDGoC) Universiti Sains Malaysia
 * **Modern, Responsive UI:** Features a GDGoC-branded design, smooth scroll transitions, and dynamic Dark/Light mode toggling.
 
 ---
-
 ## 🚀 Setup & Installation
 
 ### 1. Local Environment Setup
