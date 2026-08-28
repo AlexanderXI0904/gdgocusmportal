@@ -13,7 +13,9 @@ from openpyxl import load_workbook
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
-SETTINGS_FILE = BASE_DIR / "settings.json"
+CONFIG_DIR = BASE_DIR / "config"
+CONFIG_DIR.mkdir(exist_ok=True)
+SETTINGS_FILE = CONFIG_DIR / "settings.json"
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret-key")
