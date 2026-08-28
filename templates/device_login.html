@@ -6,255 +6,82 @@
     <title>Microsoft Authentication - GDGoC</title>
     
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
-    <style>
-        /* Embed GDGoC Theme Colors */
-        :root {
-            --g-blue: #4285f4;
-            --g-green: #34a853;
-            --g-yellow: #f9ab00;
-            --g-red: #ea4335;
-            --g-text: #3c4043;
-            --g-dark: #1a1a1d;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--g-dark);
-            /* Tech grid aesthetic inherited from index.html */
-            background-image: 
-                radial-gradient(circle at center, rgba(66, 133, 244, 0.15) 0, transparent 50%),
-                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
-            color: var(--g-text);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .auth-card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* 4-Color Google Border at the top */
-        .auth-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 6px;
-            background: linear-gradient(90deg, 
-                var(--g-blue) 0%, var(--g-blue) 25%, 
-                var(--g-red) 25%, var(--g-red) 50%, 
-                var(--g-yellow) 50%, var(--g-yellow) 75%, 
-                var(--g-green) 75%, var(--g-green) 100%);
-        }
-
-        .brand {
-            margin-bottom: 25px;
-        }
-
-        .g-logo {
-            font-size: 2rem;
-            font-weight: 900;
-            letter-spacing: 1.5px;
-            display: inline-block;
-        }
-        .g-logo span:nth-child(1) { color: var(--g-blue); }
-        .g-logo span:nth-child(2) { color: var(--g-red); }
-        .g-logo span:nth-child(3) { color: var(--g-yellow); }
-        .g-logo span:nth-child(4) { color: var(--g-blue); }
-        .g-logo span:nth-child(5) { color: var(--g-green); }
-        .g-logo span:nth-child(6) { color: var(--g-red); }
-        
-        .brand span.app-title {
-            display: block;
-            color: #5f6368;
-            font-size: 1rem;
-            margin-top: 5px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            color: var(--g-text);
-            margin-bottom: 15px;
-        }
-
-        p {
-            color: #5f6368;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .device-code-container {
-            background: #e8f0fe;
-            border: 2px dashed var(--g-blue);
-            border-radius: 8px;
-            padding: 25px 20px;
-            margin: 25px 0;
-            position: relative;
-        }
-
-        .device-code-container small {
-            display: block;
-            color: var(--g-blue);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.75rem;
-            margin-bottom: 10px;
-        }
-
-        .device-code {
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: var(--g-text);
-            letter-spacing: 4px;
-            font-family: monospace;
-        }
-
-        .copy-btn {
-            background: transparent;
-            border: none;
-            color: var(--g-blue);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-top: 15px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: opacity 0.2s;
-        }
-        .copy-btn:hover {
-            opacity: 0.8;
-            text-decoration: underline;
-        }
-
-        .button {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 1.05rem;
-            font-weight: bold;
-            text-decoration: none;
-            box-sizing: border-box;
-            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-            margin-bottom: 15px;
-        }
-
-        .button.primary {
-            background: var(--g-blue);
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
-        }
-        .button.primary:hover { 
-            background: #3367d6; 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4);
-        }
-
-        .button.secondary {
-            background: var(--g-green);
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(52, 168, 83, 0.3);
-        }
-        .button.secondary:hover { 
-            background: #2b8a41; 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(52, 168, 83, 0.4);
-        }
-
-        .muted {
-            font-size: 0.85rem;
-            color: #80868b;
-            margin-top: 20px;
-            margin-bottom: 0;
-            font-style: italic;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body data-page="auth">
 
-<div class="auth-card">
+<header class="g-header">
+    <div class="user-logo">
+        <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo" style="height: 45px; border-radius: 50%;">
+    </div>
+    
+    <div class="g-logo">
+        <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo" style="height: 40px;">
+    </div>
+</header>
 
-    <div class="brand">
-        <div class="g-logo">
-            <span>G</span><span>D</span><span>G</span><span>o</span><span>C</span>
+<main class="main" style="display: flex; justify-content: center; align-items: center; flex-grow: 1; margin: 60px auto;">
+
+    <section class="card" style="width: 100%; max-width: 500px; text-align: center; padding: 40px 30px;">
+        
+        <div class="card-header" style="margin-bottom: 25px;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 10px;">Action Required</h2>
+            <p>A secure sign-in code has been generated. Open the Microsoft login portal and enter the code below to connect your account.</p>
         </div>
-        <span class="app-title">Email Sender</span>
-    </div>
 
-    <h1>Action Required</h1>
+        <div style="background: #e8f0fe; border: 2px dashed var(--g-blue); border-radius: 8px; padding: 25px 20px; margin: 25px 0;">
+            <small style="display: block; color: var(--g-blue); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; margin-bottom: 10px;">
+                Authentication Code
+            </small>
+            
+            <div id="authCode" style="font-size: 2.2rem; font-weight: bold; color: var(--g-text); letter-spacing: 4px; font-family: monospace;">
+                {{ flow.user_code }}
+            </div>
+            
+            <button class="button outline" onclick="copyCode()" id="copyBtn" style="margin-top: 15px; padding: 8px 16px; font-size: 0.9rem; border: none; background: transparent; text-decoration: underline;">
+                📋 Copy Code
+            </button>
+        </div>
 
-    <p>
-        A secure sign-in code has been generated. Open the Microsoft login portal and enter the code below to connect your account.
-    </p>
+        <a href="{{ flow.verification_uri }}" target="_blank" class="button primary" style="width: 100%; margin-bottom: 15px; box-sizing: border-box;">
+            1. Open Microsoft Login
+        </a>
 
-    <div class="device-code-container">
-        <small>Authentication Code</small>
-        
-        <div class="device-code" id="authCode">{{ flow.user_code }}</div>
-        
-        <button class="copy-btn" onclick="copyCode()" id="copyBtn">
-            📋 Copy Code
-        </button>
-    </div>
+        <form action="{{ url_for('complete_authentication') }}" method="POST">
+            <button type="submit" class="button secondary" style="width: 100%; box-sizing: border-box; background: var(--g-green); color: white; border: none;">
+                2. I Have Completed Sign-In
+            </button>
+        </form>
 
-    <a href="{{ flow.verification_uri }}" target="_blank" class="button primary">
-        1. Open Microsoft Login
-    </a>
+        <p style="font-size: 0.85rem; color: #80868b; margin-top: 20px; font-style: italic;">
+            Wait for the Microsoft window to confirm success before clicking step 2.
+        </p>
 
-    <form action="{{ url_for('complete_authentication') }}" method="POST">
-        <button type="submit" class="button secondary">
-            2. I Have Completed Sign-In
-        </button>
-    </form>
+    </section>
 
-    <p class="muted">
-        Wait for the Microsoft window to confirm success before clicking step 2.
-    </p>
+</main>
 
-</div>
+<footer class="g-footer">
+    All rights reserved. GDGoC Email Application
+</footer>
 
 <script>
     function copyCode() {
-        // Get the text from the code container
         const codeText = document.getElementById('authCode').innerText;
         
-        // Copy to clipboard
         navigator.clipboard.writeText(codeText).then(() => {
             const btn = document.getElementById('copyBtn');
             const originalText = btn.innerHTML;
             
-            // Visual feedback
             btn.innerHTML = '✅ Copied!';
             btn.style.color = 'var(--g-green)';
+            btn.style.textDecoration = 'none';
             
-            // Reset button text after 2.5 seconds
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.color = 'var(--g-blue)';
+                btn.style.color = '';
+                btn.style.textDecoration = 'underline';
             }, 2500);
         }).catch(err => {
             console.error('Failed to copy text: ', err);

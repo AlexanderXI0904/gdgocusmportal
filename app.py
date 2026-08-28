@@ -18,7 +18,7 @@ CONFIG_DIR.mkdir(exist_ok=True)
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret-key")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "gdgoc28usm08email26sender2501key")
 
 # ============================================================
 # AUTOMATIC CLEANUP
