@@ -350,7 +350,52 @@ def preview():
         flash("Subject and email column are required.", "error")
         return redirect(url_for("editor"))
 
-    recipients = get_recipients(email_col)
+    wb = get_workbook()
+    sheet_name = session.get("sheet_name")
+    
+    if not wb or not sheet_name or sheet_name not in wb.sheetnames:
+        if wb:
+            wb.close()
+        flash("Worksheet no longer available.", "error")
+        return redirect(url_for("index"))
+
+    ws = wb[sheet_name]
+    headers = {
+        str(cell.value).strip(): idx 
+        for idx, cell in enumerate(ws[1], start=1) if cell.value is not None
+    }
+
+    if email_col not in headers:
+        wb.close()
+        flash("Selected email column no longer exists.", "error")
+        return redirect(url_for("editor"))
+
+    email_idx = headers[email_col]
+    
+    preview_data = []
+    recipients = []
+
+    for row_number in range(2, ws.max_row + 1):
+        email_val = ws.cell(row=row_number, column=email_idx).value
+        if not email_val:
+            continue
+            
+        email = str(email_val).strip()
+        if not email:
+            continue
+
+        row_data = get_row_data(ws, row_number)
+        
+        clean_data = {k: ("" if v is None else str(v)) for k, v in row_data.items()}
+        
+        recipients.append(email)
+        preview_data.append({
+            "email": email,
+            "data": clean_data
+        })
+
+    wb.close()
+
     if not recipients:
         flash("No valid recipients found.", "error")
         return redirect(url_for("editor"))
@@ -363,9 +408,10 @@ def preview():
         html=html,
         email_column=email_col,
         cc=cc,
-        sheet_name=session.get("sheet_name"),
+        sheet_name=sheet_name,
         recipient_count=len(recipients),
-        recipients=recipients
+        recipients=recipients,
+        preview_data_json=json.dumps(preview_data)  
     )
 
 @app.route("/send-emails", methods=["POST"])

@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GDGoC Email Sender</title>
     
+    <!-- Execute immediately to prevent Light/Dark flash on reload -->
+    <script>
+        const savedTheme = localStorage.getItem('gdgoc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
@@ -19,6 +25,7 @@
     data-sent="{{ sent|default(0) }}" 
     data-failed="{{ failed|default(0) }}"
     data-has-config="{% if authenticated or excel_filename or sheets %}true{% else %}false{% endif %}"
+    data-save-cc-url="{{ url_for('save_cc') }}"
 >
 
 <header class="g-header">
@@ -60,7 +67,7 @@
         </div>
 
         <ul id="campaign-list">
-            <li class="campaign-item" style="justify-content: center; color: #70757a; font-style: italic;">
+            <li class="campaign-item" style="justify-content: center; color: var(--text-muted); font-style: italic;">
                 No campaigns generated in this session yet.
             </li>
         </ul>
@@ -69,14 +76,14 @@
             
             <div class="page-header" style="margin-bottom: 30px;">
                 <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">New Campaign Configuration</h1>
-                <p style="color: #5f6368; margin: 0;">Authenticate with Microsoft and select your Excel data source.</p>
+                <p style="color: var(--text-muted); margin: 0;">Authenticate with Microsoft and select your Excel data source.</p>
             </div>
 
             <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h2>Microsoft Authentication</h2>
-                        <p>Connect your Microsoft account before sending emails.</p>
+                        <p style="color: var(--text-muted);">Connect your Microsoft account before sending emails.</p>
                     </div>
                     {% if authenticated %}
                         <span class="status success">● Authenticated</span>
@@ -126,7 +133,7 @@
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h2>Excel Data Source</h2>
-                        <p>Upload the Excel workbook containing your recipients.</p>
+                        <p style="color: var(--text-muted);">Upload the Excel workbook containing your recipients.</p>
                     </div>
                     {% if excel_filename %}
                         <span class="status success">✓ {{ excel_filename }}</span>
@@ -134,9 +141,9 @@
                 </div>
 
                 <form action="{{ url_for('upload_excel') }}" method="POST" enctype="multipart/form-data">
-                    <div style="border: 2px dashed #dadce0; padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 20px; background: #fafafa;">
-                        <input type="file" name="file" accept=".xlsx,.xlsm" required style="border: none; background: none; max-width: 300px; margin: 0 auto; display: block;">
-                        <p style="margin: 10px 0 0 0; color: #5f6368;">.xlsx or .xlsm</p>
+                    <div style="border: 2px dashed var(--border-color); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 20px; background: var(--box-bg);">
+                        <input type="file" name="file" accept=".xlsx,.xlsm" required style="border: none; background: none; max-width: 300px; margin: 0 auto; display: block; color: var(--g-text);">
+                        <p style="margin: 10px 0 0 0; color: var(--text-muted);">.xlsx or .xlsm</p>
                     </div>
                     <button type="submit" class="button primary">Upload Excel</button>
                 </form>
@@ -146,7 +153,7 @@
             <section class="card">
                 <div class="card-header">
                     <h2>Select Worksheet</h2>
-                    <p>Choose the worksheet containing your email data.</p>
+                    <p style="color: var(--text-muted);">Choose the worksheet containing your email data.</p>
                 </div>
 
                 <form action="{{ url_for('select_sheet') }}" method="POST">
@@ -161,8 +168,8 @@
                 </form>
 
                 {% if selected_sheet and columns %}
-                <div style="background: var(--g-white); padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #dadce0;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Detected Data Columns</h3>
+                <div style="background: var(--box-bg); padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.1rem; color: var(--g-text);">Detected Data Columns</h3>
                     <div>
                         {% for column in columns %}
                             <span class="column-chip">{{ column }}</span>
@@ -187,7 +194,7 @@
         <div class="page-header" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Email Editor</h1>
-                <p style="color: #5f6368; margin: 0;">Compose your email and insert dynamic Excel fields.</p>
+                <p style="color: var(--text-muted); margin: 0;">Compose your email and insert dynamic Excel fields.</p>
             </div>
             
             <div>
@@ -205,7 +212,7 @@
             <section class="card">
                 <div class="card-header">
                     <h2>Email Details</h2>
-                    <p>Configure your email metadata.</p>
+                    <p style="color: var(--text-muted);">Configure your email metadata.</p>
                 </div>
                 <div class="form-grid">
                     <div class="field">
@@ -222,16 +229,16 @@
                     </div>
                 </div>
 
-                <div class="field" style="border-top: 1px solid #dadce0; padding-top: 20px;">
+                <div class="field" style="border-top: 1px solid var(--border-color); padding-top: 20px;">
                     <label>CC Recipients</label>
                     <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
                         {% for email in cc_emails %}
-                        <label style="background: #e8f0fe; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--g-blue); cursor: pointer;">
+                        <label style="background: var(--light-blue); padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--g-blue); cursor: pointer;">
                             <input type="checkbox" name="cc" value="{{ email }}">
-                            <span style="color: var(--g-blue);">{{ email }}</span>
+                            <span style="color: var(--g-blue); font-weight: 500;">{{ email }}</span>
                         </label>
                         {% else %}
-                        <p style="color: #70757a; font-style: italic; margin: 0;">No saved CC addresses.</p>
+                        <p style="color: var(--text-muted); font-style: italic; margin: 0;">No saved CC addresses.</p>
                         {% endfor %}
                     </div>
                     <div style="display: flex; gap: 10px; max-width: 400px;">
@@ -245,7 +252,7 @@
             <section class="card">
                 <div class="card-header">
                     <h2>Recipient Mapping</h2>
-                    <p>Select the Excel column containing recipient email addresses.</p>
+                    <p style="color: var(--text-muted);">Select the Excel column containing recipient email addresses.</p>
                 </div>
                 <div class="field">
                     <select name="email_column" required style="max-width: 400px;">
@@ -261,13 +268,13 @@
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h2>Message Body</h2>
-                        <p>Write your email visually or edit the HTML directly.</p>
+                        <p style="color: var(--text-muted);">Write your email visually or edit the HTML directly.</p>
                     </div>
                     <button type="button" class="button outline" onclick="toggleEditor()" id="editorToggle">HTML View</button>
                 </div>
 
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dadce0; margin-bottom: 20px;">
-                    <strong style="display: block; margin-bottom: 10px;">Dynamic content (Click to insert):</strong>
+                <div style="background: var(--box-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <strong style="display: block; margin-bottom: 10px; color: var(--g-text);">Dynamic content (Click to insert):</strong>
                     <div class="dynamic-fields">
                         {% for column in columns %}
                             <button type="button" class="dynamic-field" data-column="{{ column }}" onclick="insertDynamic(this.dataset.column)">
@@ -284,7 +291,7 @@
                     <p>Best regards,<br>GDGoC USM</p>
                 </div>
                 <textarea id="htmlEditor" name="html" class="html-editor" hidden></textarea>
-                <div style="text-align: right; color: #5f6368; font-size: 0.9rem;"><span id="editorMode">Visual Editor Active</span></div>
+                <div style="text-align: right; color: var(--text-muted); font-size: 0.9rem;"><span id="editorMode">Visual Editor Active</span></div>
             </section>
 
             <div class="bottom-actions">
@@ -299,52 +306,82 @@
     <main class="main">
         <div class="page-header" style="margin-bottom: 30px;">
             <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Preview & Confirmation</h1>
-            <p style="color: #5f6368; margin: 0;">Review the message and recipients before sending.</p>
+            <p style="color: var(--text-muted); margin: 0;">Review the live generated messages and recipients before sending.</p>
         </div>
 
         <section class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
-            <div class="summary-grid">
-                <div><span>Subject</span><strong>{{ subject }}</strong></div>
+            <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div><span>Importance</span><strong>{{ importance|capitalize }}</strong></div>
                 <div><span>Worksheet</span><strong>{{ sheet_name }}</strong></div>
                 <div><span>Recipients</span><strong>{{ recipient_count }}</strong></div>
             </div>
         </section>
 
+        <!-- LIVE DATA PREVIEW COMPONENT -->
         <section class="card">
-            <div class="card-header">
-                <h2>Email Preview</h2>
-                <p>Dynamic placeholders are shown before Excel values are inserted.</p>
-            </div>
-            <div style="border: 1px solid #dadce0; border-radius: 6px; overflow: hidden;">
-                <div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dadce0;">
-                    <strong>Subject: </strong> {{ subject }}
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h2>Live Email Preview</h2>
+                    <p id="preview-counter" style="margin: 0; color: var(--text-muted);">Loading preview data...</p>
                 </div>
-                <div style="padding: 20px; background: #ffffff;">
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="button outline" style="padding: 6px 16px; font-weight: bold;" onclick="changePreview(-1)">← Prev</button>
+                    <button type="button" class="button outline" style="padding: 6px 16px; font-weight: bold;" onclick="changePreview(1)">Next →</button>
+                </div>
+            </div>
+            
+            <div style="border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; margin-top: 15px;">
+                <div style="background: var(--box-bg); padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem;">
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: var(--text-muted); width: 70px; display: inline-block;">To:</strong> 
+                        <span id="preview-to-display" style="color: var(--g-blue); font-weight: bold;">Loading...</span>
+                    </div>
+                    {% if cc %}
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: var(--text-muted); width: 70px; display: inline-block;">Cc:</strong> 
+                        <span style="color: var(--g-text);">{{ cc | join(', ') }}</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <strong style="color: var(--text-muted); width: 70px; display: inline-block;">Subject:</strong> 
+                        <span id="preview-subject-display" style="font-weight: bold; color: var(--g-text);">{{ subject }}</span>
+                    </div>
+                </div>
+                <div id="preview-body-display" style="padding: 20px; background: var(--card-bg); min-height: 250px; color: var(--g-text);">
                     {{ html|safe }}
                 </div>
             </div>
+            
+            <script type="application/json" id="previewDataJson">
+                {{ preview_data_json | safe }}
+            </script>
         </section>
 
+        <!-- Target Recipients Scroll Box (Now a vertical list) -->
         <section class="card">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h2>Targeted Recipients</h2>
-                    <p>The following addresses will receive the email.</p>
+                    <p style="color: var(--text-muted);">The following addresses will receive the email.</p>
                 </div>
                 <span class="status">{{ recipient_count }} recipients found</span>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
-                {% for email in recipients %}
-                    <div style="background: var(--g-white); padding: 10px; border-radius: 4px; border: 1px solid #dadce0; text-align: center;">{{ email }}</div>
-                {% endfor %}
+            
+            <div class="recipients-scroll-box" style="padding: 0;">
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    {% for email in recipients %}
+                        <li style="padding: 12px 20px; border-bottom: 1px solid var(--border-color); color: var(--g-text); font-size: 0.95rem;">
+                            {{ email }}
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </section>
 
-        <section class="card" style="border: 2px solid var(--g-red); background: #fffcfc;">
+        <section class="card" style="border: 2px solid var(--g-red); background: var(--danger-bg);">
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="color: var(--g-red); margin: 0 0 10px 0;">Ready to send?</h2>
-                <p style="color: #5f6368; margin: 0;">This action will immediately send <strong>{{ recipient_count }}</strong> emails via Microsoft Graph.</p>
+                <p style="color: var(--text-muted); margin: 0;">This action will immediately send <strong>{{ recipient_count }}</strong> emails via Microsoft Graph.</p>
             </div>
             <form action="{{ url_for('send_emails') }}" method="POST" onsubmit="return confirm('Are you sure you want to send these emails?');" style="text-align: center;">
                 <input type="hidden" name="subject" value="{{ subject }}">
@@ -368,7 +405,7 @@
     <main class="main">
         <div class="page-header" style="margin-bottom: 30px; text-align: center;">
             <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Sending Complete</h1>
-            <p style="color: #5f6368; margin: 0;">Microsoft Graph email dispatch has finished processing.</p>
+            <p style="color: var(--text-muted); margin: 0;">Microsoft Graph email dispatch has finished processing.</p>
         </div>
 
         <section class="result-summary">
@@ -386,9 +423,9 @@
             <div class="card-header">
                 <h2>Detailed Log</h2>
             </div>
-            <div>
+            <div class="recipients-scroll-box" style="padding: 0;">
                 {% for result in results %}
-                    <div class="result-row">
+                    <div class="result-row" style="padding: 12px 20px;">
                         <span style="color: var(--g-text);">{{ result.email }}</span>
                         <strong class="{% if result.status == 'Sent' %}result-success{% else %}result-failed{% endif %}">
                             {{ result.status }}
@@ -410,9 +447,30 @@
     All rights reserved. GDGoC USM Email Application
 </footer>
 
+<!-- DARK MODE TOGGLE FAB -->
+<button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+    🌙
+</button>
+
 <script>
 let htmlMode = false;
 let codeMirrorEditor = null;
+
+// ==========================================
+// DARK MODE THEME TOGGLE
+// ==========================================
+function updateThemeIcon() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    document.getElementById('theme-toggle').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('gdgoc_theme', newTheme);
+    updateThemeIcon();
+}
 
 // ==========================================
 // UI TRANSITION LOGIC (HERO FADE OUT)
@@ -422,23 +480,79 @@ window.addEventListener('scroll', () => {
     if (hero) {
         const scrollPos = window.scrollY;
 
-        // 1. Toggle the bottom border gradient fade overlay
         if (scrollPos > 15) {
             hero.classList.add('is-scrolling');
         } else {
             hero.classList.remove('is-scrolling');
         }
 
-        // 2. Fade out ONLY the text and button, keeping the background solid
         const heroHeight = hero.offsetHeight;
-        let textOpacity = 1 - (scrollPos / (heroHeight * 0.5)); // Fades slightly faster
+        let textOpacity = 1 - (scrollPos / (heroHeight * 0.5)); 
         
-        // Loop through the inner content (h1, button) to fade them independently
         Array.from(hero.children).forEach(child => {
             child.style.opacity = Math.max(0, textOpacity);
         });
     }
 });
+
+// ==========================================
+// LIVE PREVIEW PAGINATION (PAGE 3)
+// ==========================================
+let currentPreviewIndex = 0;
+let previewData = [];
+
+function loadLivePreviewData() {
+    const jsonBlock = document.getElementById("previewDataJson");
+    if (jsonBlock) {
+        try {
+            previewData = JSON.parse(jsonBlock.textContent);
+            if (previewData && previewData.length > 0) {
+                renderLivePreview();
+            }
+        } catch(e) {
+            console.error("Failed to load live preview data:", e);
+        }
+    }
+}
+
+function renderLivePreview() {
+    if (!previewData || previewData.length === 0) return;
+    
+    const rawSubject = document.querySelector("input[name='subject']").value;
+    const rawHtml = document.querySelector("input[name='html']").value;
+    
+    const person = previewData[currentPreviewIndex];
+    let liveSubject = rawSubject;
+    let liveHtml = rawHtml;
+    
+    for (const [columnKey, cellValue] of Object.entries(person.data)) {
+        const placeholder = "{" + "{" + columnKey + "}" + "}"; 
+        liveSubject = liveSubject.split(placeholder).join(cellValue);
+        liveHtml = liveHtml.split(placeholder).join(cellValue);
+    }
+    
+    document.getElementById('preview-subject-display').innerText = liveSubject;
+    document.getElementById('preview-body-display').innerHTML = liveHtml;
+    
+    const toDisplay = document.getElementById('preview-to-display');
+    if (toDisplay) toDisplay.innerText = person.email;
+    
+    document.getElementById('preview-counter').innerHTML = `<strong>Recipient ${currentPreviewIndex + 1} of ${previewData.length}</strong>`;
+}
+
+function changePreview(direction) {
+    if (!previewData || previewData.length === 0) return;
+    
+    currentPreviewIndex += direction;
+    
+    if (currentPreviewIndex < 0) {
+        currentPreviewIndex = previewData.length - 1;
+    } else if (currentPreviewIndex >= previewData.length) {
+        currentPreviewIndex = 0;
+    }
+    
+    renderLivePreview();
+}
 
 // ==========================================
 // IMPORT & EXPORT SAVED CAMPAIGN LOGIC
@@ -539,9 +653,11 @@ function importCampaign(event) {
 }
 
 // ==========================================
-// Session & Editor State Preservation Tracker
+// DOM LOAD - INITIALIZATIONS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    
+    updateThemeIcon(); // Initialize correct toggle icon
     
     const bodyData = document.body.dataset;
     const currentPage = parseInt(bodyData.page) || 1;
@@ -549,7 +665,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Page 1 Logic
     if (currentPage === 1) {
-        // Clear any lingering editor states if user is restarting a campaign entirely
         sessionStorage.removeItem('gdgoc_editor_state');
 
         const list = document.getElementById('campaign-list');
@@ -560,8 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 campaigns.forEach((c, index) => {
                     list.innerHTML += `
                         <li class="campaign-item">
-                            <span><strong style="color: var(--g-blue); font-size: 1.1rem;">Campaign ${index + 1}</strong> <span style="color: #70757a; font-size: 0.9rem; margin-left: 10px;">${c.date}</span></span>
-                            <span style="background: var(--g-white); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
+                            <span><strong style="color: var(--g-blue); font-size: 1.1rem;">Campaign ${index + 1}</strong> <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 10px;">${c.date}</span></span>
+                            <span style="background: var(--box-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
                                 <strong style="color: var(--g-green)">Sent: ${c.sent}</strong> &nbsp;|&nbsp; <strong style="color: var(--g-red)">Failed: ${c.failed}</strong>
                             </span>
                         </li>
@@ -576,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Page 2 State Preservation (Restore User Input if they clicked "Back")
+    // Page 2 State Preservation
     if (currentPage === 2) {
         const savedState = sessionStorage.getItem('gdgoc_editor_state');
         if (savedState) {
@@ -606,7 +721,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const existingCb = document.querySelector(`input[name='cc'][type='checkbox'][value='${email}']`);
                         if (!existingCb) {
                             let container = document.getElementById("newCcContainer");
-                            // Avoid duplicating hidden labels on multiple backwards navigations
                             if (!container.querySelector(`input[value='${email}']`)) {
                                 let hidden = document.createElement("input"); 
                                 hidden.type = "hidden"; hidden.name = "cc"; hidden.value = email;
@@ -624,9 +738,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Page 4 Logic
+    if (currentPage === 3) {
+        loadLivePreviewData();
+    }
+
     if (currentPage === 4) {
-        // Clear editor state memory after a successful send
         sessionStorage.removeItem('gdgoc_editor_state');
 
         let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
@@ -673,7 +789,8 @@ function addCc() {
     
     document.getElementById("newCc").value = "";
     
-    fetch("{{ url_for('save_cc') }}", {
+    const saveCcUrl = document.body.dataset.saveCcUrl;
+    fetch(saveCcUrl, {
         method: "POST", 
         headers: {"Content-Type": "application/x-www-form-urlencoded"}, 
         body: "email=" + encodeURIComponent(email)
@@ -743,7 +860,6 @@ if (emailForm) {
             textarea.value = document.getElementById("wysiwygEditor").innerHTML;
         }
 
-        // SAVE FORM STATE ON SUBMIT (Before leaving Page 2)
         const checkedCcs = Array.from(document.querySelectorAll("input[name='cc'][type='checkbox']:checked")).map(cb => cb.value);
         const hiddenCcs = Array.from(document.querySelectorAll("input[name='cc'][type='hidden']")).map(inp => inp.value);
         const ccList = [...new Set([...checkedCcs, ...hiddenCcs])];
@@ -759,16 +875,9 @@ if (emailForm) {
     });
 }
 
-// ==========================================
-// PASSWORD VISIBILITY TOGGLE
-// ==========================================
 function toggleVisibility(inputId, btnElement) {
     const input = document.getElementById(inputId);
-    
-    // SVG for Slashed Eye (Hidden)
     const eyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-    
-    // SVG for Open Eye (Visible)
     const eyeOn = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
 
     if (input.type === "password") {
