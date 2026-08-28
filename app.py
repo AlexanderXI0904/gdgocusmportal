@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import msal
+import atexit
 from pathlib import Path
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from openpyxl import load_workbook
@@ -16,6 +17,25 @@ SETTINGS_FILE = BASE_DIR / "settings.json"
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret-key")
+
+# ============================================================
+# AUTOMATIC CLEANUP
+# ============================================================
+def cleanup_uploads():
+    """Wipes all temporary files in the uploads folder on shutdown/startup."""
+    if UPLOAD_DIR.exists():
+        for file in UPLOAD_DIR.glob("*"):
+            try:
+                if file.is_file():
+                    file.unlink()
+            except Exception:
+                pass
+
+# Register the function to trigger automatically when the app closes
+atexit.register(cleanup_uploads)
+
+# Trigger it once on startup to clear any files left from a previous crash
+cleanup_uploads()
 
 DEFAULT_SETTINGS = {
     "client_id": "",
