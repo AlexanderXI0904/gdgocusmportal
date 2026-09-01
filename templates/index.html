@@ -846,6 +846,10 @@
                     <strong id="failed-count">0</strong>
                 </div>
             </div>
+            
+            <div id="cancel-container" style="margin-top: 25px; text-align: center; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button type="button" class="button outline" style="color: var(--g-red); border-color: var(--g-red);" onclick="cancelTask()">Stop Sending</button>
+            </div>
 
         </section>
 
@@ -880,6 +884,19 @@
         <script>
             const taskId = "{{ task_id }}";
 
+            // Cancel trigger function
+            function cancelTask() {
+                if (confirm("Are you sure you want to abort the batch process? Any currently processing emails will finish, but the rest will be skipped.")) {
+                    fetch(`/cancel-task/${taskId}`, { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('cancel-container').innerHTML = '<span style="color: var(--text-muted);">Cancelling gracefully...</span>';
+                            }
+                        });
+                }
+            }
+
             const pollInterval = setInterval(() => {
                 fetch(`/task-status/${taskId}`)
                     .then(res => res.json())
@@ -905,14 +922,21 @@
                         document.getElementById('sent-count').innerText = data.sent;
                         document.getElementById('failed-count').innerText = data.failed;
 
-                        if (data.status === 'completed' || data.status === 'error') {
+                        if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
                             clearInterval(pollInterval);
 
-                            document.getElementById('status-title').innerText =
-                                'Sending Complete';
+                            // Hide the cancel button container
+                            const cancelContainer = document.getElementById('cancel-container');
+                            if(cancelContainer) cancelContainer.style.display = 'none';
 
-                            document.getElementById('status-sub').innerText =
-                                'Microsoft Graph dispatch has finished processing.';
+                            if (data.status === 'cancelled') {
+                                document.getElementById('status-title').innerText = 'Sending Aborted';
+                                document.getElementById('status-title').style.color = 'var(--g-red)';
+                                document.getElementById('status-sub').innerText = 'The batch process was manually stopped.';
+                            } else {
+                                document.getElementById('status-title').innerText = 'Sending Complete';
+                                document.getElementById('status-sub').innerText = 'Microsoft Graph dispatch has finished processing.';
+                            }
 
                             const logList = document.getElementById('log-list');
 
@@ -1421,32 +1445,24 @@
 
         const person = previewData[currentPreviewIndex];
 
-        let liveSubject =
-            document.querySelector("input[name='subject']").value;
+        // Grab the raw template from the hidden inputs
+        let liveSubject = document.querySelector("input[name='subject']").value || "";
+        let liveHtml = document.querySelector("input[name='html']").value || "";
 
-        let liveHtml =
-            document.querySelector("input[name='html']").value;
-
-
+        // Safely iterate through fetched Excel data and replace placeholders using Regex
+        // This handles cases where users accidentally add spaces like {{ CompanyName }}
         for (const [col, val] of Object.entries(person.data)) {
-            const placeholder = "{{" + col + "}}";
-
-            liveSubject =
-                liveSubject.split(placeholder).join(val);
-
-            liveHtml =
-                liveHtml.split(placeholder).join(val);
+            const safeCol = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp("\\{\\{\\s*" + safeCol + "\\s*\\}\\}", "g");
+            
+            liveSubject = liveSubject.replace(regex, val || '');
+            liveHtml = liveHtml.replace(regex, val || '');
         }
 
-
-        document.getElementById('preview-subject-display').innerText =
-            liveSubject;
-
-        document.getElementById('preview-body-display').innerHTML =
-            liveHtml;
-
-        document.getElementById('preview-to-display').innerText =
-            person.email;
+        // Render the live data to the UI
+        document.getElementById('preview-subject-display').innerText = liveSubject;
+        document.getElementById('preview-body-display').innerHTML = liveHtml;
+        document.getElementById('preview-to-display').innerText = person.email;
 
         document.getElementById('preview-counter').innerHTML = `
             <strong>

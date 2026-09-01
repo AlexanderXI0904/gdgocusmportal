@@ -212,6 +212,11 @@ def background_worker(task_id, access_token, subject_template, importance, html_
                 })
 
     for row_number in range(2, ws.max_row + 1):
+        # 1. Break out of the loop if a cancel request was received
+        if active_tasks[task_id].get("cancel_requested"):
+            active_tasks[task_id]["status"] = "cancelled"
+            break
+
         email_val = ws.cell(row=row_number, column=email_idx).value
         if not email_val: continue
         email = str(email_val).strip()
@@ -272,7 +277,9 @@ def background_worker(task_id, access_token, subject_template, importance, html_
         except OSError:
             pass
 
-    active_tasks[task_id]["status"] = "completed"
+    # 2. Only assign 'completed' if the loop finished naturally
+    if active_tasks[task_id].get("status") != "cancelled":
+        active_tasks[task_id]["status"] = "completed"
 
 # ============================================================
 # ROUTES
@@ -537,6 +544,14 @@ def start_send():
     threading.Thread(target=background_worker, kwargs=kwargs).start()
     
     return render_template("index.html", page=4, task_id=task_id)
+
+@app.route("/cancel-task/<task_id>", methods=["POST"])
+def cancel_task(task_id):
+    if task_id in active_tasks:
+        # Flag the task so the background thread aborts on the next loop
+        active_tasks[task_id]["cancel_requested"] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Task not found"})
 
 @app.route("/task-status/<task_id>")
 def task_status(task_id):

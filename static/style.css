@@ -458,11 +458,12 @@ input[type="password"] { letter-spacing: 2px; }
     background: var(--g-blue); 
     height: 100%; 
     width: 0%; 
+    min-width: 45px; /* Ensures the blue background wraps the "0%" text */
     transition: width 0.4s ease; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    color: white; 
+    color: #ffffff; 
     font-weight: bold; 
     font-size: 0.9rem; 
 }
@@ -782,4 +783,16 @@ input[type="password"] { letter-spacing: 2px; }
     height: auto !important;
     border-radius: 6px;
     border: 1px solid var(--border-color);
+}
+
+/* Force white text cursor in dark mode */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] [contenteditable="true"] {
+    caret-color: #ffffff;
+}
+
+/* Force white cursor specifically inside the CodeMirror editor */
+[data-theme="dark"] .CodeMirror-cursor {
+    border-left: 1px solid #ffffff !important;
 }
