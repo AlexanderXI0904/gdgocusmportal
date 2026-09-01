@@ -775,3 +775,11 @@ input[type="password"] { letter-spacing: 2px; }
     border: 1px solid var(--border-color); 
     margin-left: auto; 
 }
+
+/* Enforce CodeMirror sizing bounds */
+.CodeMirror {
+    min-height: 350px !important;
+    height: auto !important;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}

@@ -1002,6 +1002,10 @@
 </button>
 
 <script>
+    let htmlMode = false;
+    let codeMirrorEditor = null;
+    let savedGlobalEmails = [];
+
     function updateThemeIcon() {
         const isDark =
             document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1504,47 +1508,47 @@
     // ============================================================
 
     function toggleEditor() {
-        const visual =
-            document.getElementById('wysiwygEditor');
-
-        const textarea =
-            document.getElementById('htmlEditor');
-
-        const button =
-            document.getElementById('editorToggle');
-
+        const visual = document.getElementById('wysiwygEditor');
+        const textarea = document.getElementById('htmlEditor');
+        const button = document.getElementById('editorToggle');
 
         if (!htmlMode) {
             textarea.value = visual.innerHTML;
-            textarea.hidden = false;
-
+            textarea.removeAttribute('hidden');
+            textarea.style.display = 'block';
             visual.style.display = 'none';
 
-            codeMirrorEditor =
-                CodeMirror.fromTextArea(textarea, {
-                    mode: 'htmlmixed',
-                    lineNumbers: true,
-                    lineWrapping: true
-                });
+            codeMirrorEditor = CodeMirror.fromTextArea(textarea, {
+                mode: 'htmlmixed',
+                lineNumbers: true,
+                lineWrapping: true
+            });
+
+            // Force CodeMirror to refresh and calculate sizing correctly
+            setTimeout(() => {
+                codeMirrorEditor.refresh();
+            }, 10);
 
             button.innerText = 'Visual View';
             htmlMode = true;
 
         } else {
-            visual.innerHTML =
-                codeMirrorEditor.getValue();
+            if (codeMirrorEditor) {
+                visual.innerHTML = codeMirrorEditor.getValue();
+                codeMirrorEditor.toTextArea();
+                codeMirrorEditor = null;
+            } else {
+                visual.innerHTML = textarea.value;
+            }
 
-            codeMirrorEditor.toTextArea();
-            codeMirrorEditor = null;
-
-            textarea.hidden = true;
+            textarea.style.display = 'none';
+            textarea.setAttribute('hidden', 'hidden');
             visual.style.display = 'block';
 
             button.innerText = 'HTML View';
             htmlMode = false;
         }
     }
-
 
     // ============================================================
     // Campaign Export / Import
