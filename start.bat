@@ -10,7 +10,7 @@ echo.
 cd /d "%~dp0"
 
 :: Open the default web browser to the local Flask server
-start http://127.0.0.1:5000
+start http://localhost:5000
 
 :: Start the Python application
 python app.py

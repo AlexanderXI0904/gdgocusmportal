@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GDGoC Email Sender</title>
     
-    <!-- Execute immediately to prevent Light/Dark flash on reload -->
     <script>
         const savedTheme = localStorage.getItem('gdgoc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', savedTheme);
@@ -22,8 +21,6 @@
 
 <body 
     data-page="{{ page|default(1) }}" 
-    data-sent="{{ sent|default(0) }}" 
-    data-failed="{{ failed|default(0) }}"
     data-has-config="{% if authenticated or excel_filename or sheets %}true{% else %}false{% endif %}"
     data-save-cc-url="{{ url_for('save_cc') }}"
 >
@@ -32,7 +29,6 @@
     <div class="user-logo">
         <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
     </div>
-    
     <div class="g-logo">
         <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo">
     </div>
@@ -54,18 +50,14 @@
 
     <div class="landing-hero" id="hero">
         <h1>GDGoC USM Email Application</h1>
-        <button class="get-started-btn" onclick="scrollToCampaigns()">
-            Get Started 
-        </button>
+        <button class="get-started-btn" onclick="scrollToCampaigns()">Get Started</button>
     </div>
 
     <div class="campaigns-section" id="campaigns">
-        
         <div class="campaigns-header">
             <h2>Your Campaigns</h2>
-            <button class="add-campaign-btn" onclick="toggleNewCampaign()" title="Create New Campaign">+</button>
+            <button class="add-campaign-btn" onclick="toggleNewCampaign()">+</button>
         </div>
-
         <ul id="campaign-list">
             <li class="campaign-item" style="justify-content: center; color: var(--text-muted); font-style: italic;">
                 No campaigns generated in this session yet.
@@ -73,12 +65,6 @@
         </ul>
 
         <div id="new-campaign-container" class="mt-50 {% if not (authenticated or excel_filename or sheets) %}hidden{% endif %}">
-            
-            <div class="page-header" style="margin-bottom: 30px;">
-                <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">New Campaign Configuration</h1>
-                <p style="color: var(--text-muted); margin: 0;">Authenticate with Microsoft and select your Excel data source.</p>
-            </div>
-
             <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -91,26 +77,15 @@
                         <span class="status">● Not authenticated</span>
                     {% endif %}
                 </div>
-
                 <form action="{{ url_for('save_ms_settings') }}" method="POST">
                     <div class="form-grid">
                         <div class="field">
                             <label>Client ID</label>
-                            <div class="input-icon-wrapper">
-                                <input type="password" name="client_id" id="client_id" value="{{ settings.client_id }}" placeholder="Application (client) ID" required>
-                                <button type="button" class="toggle-visibility" onclick="toggleVisibility('client_id', this)" title="Toggle visibility">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </button>
-                            </div>
+                            <input type="password" name="client_id" value="{{ settings.client_id }}" required>
                         </div>
                         <div class="field">
                             <label>Tenant ID</label>
-                            <div class="input-icon-wrapper">
-                                <input type="password" name="tenant_id" id="tenant_id" value="{{ settings.tenant_id }}" placeholder="Directory (tenant) ID" required>
-                                <button type="button" class="toggle-visibility" onclick="toggleVisibility('tenant_id', this)" title="Toggle visibility">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </button>
-                            </div>
+                            <input type="password" name="tenant_id" value="{{ settings.tenant_id }}" required>
                         </div>
                     </div>
                     <button type="submit" class="button secondary">Save Microsoft Settings</button>
@@ -133,29 +108,20 @@
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h2>Excel Data Source</h2>
-                        <p style="color: var(--text-muted);">Upload the Excel workbook containing your recipients.</p>
                     </div>
                     {% if excel_filename %}
                         <span class="status success">✓ {{ excel_filename }}</span>
                     {% endif %}
                 </div>
-
                 <form action="{{ url_for('upload_excel') }}" method="POST" enctype="multipart/form-data">
-                    <div style="border: 2px dashed var(--border-color); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 20px; background: var(--box-bg);">
-                        <input type="file" name="file" accept=".xlsx,.xlsm" required style="border: none; background: none; max-width: 300px; margin: 0 auto; display: block; color: var(--g-text);">
-                        <p style="margin: 10px 0 0 0; color: var(--text-muted);">.xlsx or .xlsm</p>
-                    </div>
+                    <input type="file" name="file" accept=".xlsx,.xlsm" required style="margin-bottom: 15px; color: var(--g-text);">
                     <button type="submit" class="button primary">Upload Excel</button>
                 </form>
             </section>
 
             {% if sheets %}
             <section class="card">
-                <div class="card-header">
-                    <h2>Select Worksheet</h2>
-                    <p style="color: var(--text-muted);">Choose the worksheet containing your email data.</p>
-                </div>
-
+                <div class="card-header"><h2>Select Worksheet</h2></div>
                 <form action="{{ url_for('select_sheet') }}" method="POST">
                     <div class="sheet-selector" style="margin-bottom: 25px;">
                         {% for sheet in sheets %}
@@ -184,7 +150,6 @@
             </section>
             {% endif %}
             {% endif %}
-
         </div>
     </div>
 
@@ -196,7 +161,6 @@
                 <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Email Editor</h1>
                 <p style="color: var(--text-muted); margin: 0;">Compose your email and insert dynamic Excel fields.</p>
             </div>
-            
             <div>
                 <input type="file" id="importCampaignFile" accept=".json" style="display: none;" onchange="importCampaign(event)">
                 <button type="button" class="button outline" style="padding: 10px 20px; font-weight: bold; margin-right: 10px;" onclick="document.getElementById('importCampaignFile').click()">
@@ -208,12 +172,10 @@
             </div>
         </div>
 
-        <form action="{{ url_for('preview') }}" method="POST" id="emailForm">
+        <script id="saved-emails-data" type="application/json">{{ cc_emails | tojson }}</script>
+
+        <form action="{{ url_for('preview') }}" method="POST" id="emailForm" enctype="multipart/form-data">
             <section class="card">
-                <div class="card-header">
-                    <h2>Email Details</h2>
-                    <p style="color: var(--text-muted);">Configure your email metadata.</p>
-                </div>
                 <div class="form-grid">
                     <div class="field">
                         <label>Subject</label>
@@ -230,31 +192,48 @@
                 </div>
 
                 <div class="field" style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-                    <label>CC Recipients</label>
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
-                        {% for email in cc_emails %}
-                        <label style="background: var(--light-blue); padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--g-blue); cursor: pointer;">
-                            <input type="checkbox" name="cc" value="{{ email }}">
-                            <span style="color: var(--g-blue); font-weight: 500;">{{ email }}</span>
-                        </label>
-                        {% else %}
-                        <p style="color: var(--text-muted); font-style: italic; margin: 0;">No saved CC addresses.</p>
+                    <label>Attachments</label>
+                    
+                    {% if attachments %}
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;" id="preserved-attachments">
+                        {% for att in attachments %}
+                        <div class="email-chip" id="chip-{{ loop.index }}">
+                            <span>{{ att }}</span>
+                            <span class="remove" style="cursor: pointer; padding: 0 4px;" onclick="removeAttachment('{{ att }}', 'chip-{{ loop.index }}')" title="Remove attachment">×</span>
+                        </div>
                         {% endfor %}
                     </div>
-                    <div style="display: flex; gap: 10px; max-width: 400px;">
-                        <input type="email" id="newCc" placeholder="Add new CC email">
-                        <button type="button" class="button secondary" onclick="addCc()">Add</button>
+                    {% endif %}
+                    
+                    <input type="file" name="attachments" multiple style="color: var(--g-text);">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">Hold Ctrl (or Cmd) to select multiple files. Max recommended total size ~4MB.</p>
+                </div>
+
+                <div class="form-grid" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 0;">
+                    <div class="field">
+                        <label>Cc</label>
+                        <div class="email-chip-container" id="cc-container" onclick="this.querySelector('input').focus()">
+                            <div class="chip-wrapper">
+                                <input type="email" class="email-input-field" placeholder="Add CC...">
+                                <div class="email-dropdown"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="newCcContainer" style="margin-top: 10px;"></div>
+                    <div class="field">
+                        <label>Bcc</label>
+                        <div class="email-chip-container" id="bcc-container" onclick="this.querySelector('input').focus()">
+                            <div class="chip-wrapper">
+                                <input type="email" class="email-input-field" placeholder="Add BCC...">
+                                <div class="email-dropdown"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <section class="card">
-                <div class="card-header">
-                    <h2>Recipient Mapping</h2>
-                    <p style="color: var(--text-muted);">Select the Excel column containing recipient email addresses.</p>
-                </div>
                 <div class="field">
+                    <label>Recipient Mapping Column</label>
                     <select name="email_column" required style="max-width: 400px;">
                         <option value="">Select a column...</option>
                         {% for column in columns %}
@@ -266,32 +245,20 @@
 
             <section class="card editor-card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h2>Message Body</h2>
-                        <p style="color: var(--text-muted);">Write your email visually or edit the HTML directly.</p>
-                    </div>
+                    <h2>Message Body</h2>
                     <button type="button" class="button outline" onclick="toggleEditor()" id="editorToggle">HTML View</button>
                 </div>
-
                 <div style="background: var(--box-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 20px;">
-                    <strong style="display: block; margin-bottom: 10px; color: var(--g-text);">Dynamic content (Click to insert):</strong>
                     <div class="dynamic-fields">
                         {% for column in columns %}
-                            <button type="button" class="dynamic-field" data-column="{{ column }}" onclick="insertDynamic(this.dataset.column)">
-                                {{ column }}
-                            </button>
+                            <button type="button" class="dynamic-field" data-column="{{ column }}" onclick="insertDynamic(this.dataset.column)">{{ column }}</button>
                         {% endfor %}
                     </div>
                 </div>
-
                 <div id="wysiwygEditor" class="wysiwyg" contenteditable="true">
-                    <p>Greetings,</p>
-                    <p><strong>{{ "{{" }}CompanyName{{ "}}" }}</strong></p>
-                    <p>We are pleased to invite you to participate in our event.</p>
-                    <p>Best regards,<br>GDGoC USM</p>
+                    <p>Greetings,</p><p><strong>{{ "{{" }}CompanyName{{ "}}" }}</strong></p><p>Best regards,<br>GDGoC USM</p>
                 </div>
                 <textarea id="htmlEditor" name="html" class="html-editor" hidden></textarea>
-                <div style="text-align: right; color: var(--text-muted); font-size: 0.9rem;"><span id="editorMode">Visual Editor Active</span></div>
             </section>
 
             <div class="bottom-actions">
@@ -309,37 +276,40 @@
             <p style="color: var(--text-muted); margin: 0;">Review the live generated messages and recipients before sending.</p>
         </div>
 
-        <section class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
-            <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <div><span>Importance</span><strong>{{ importance|capitalize }}</strong></div>
-                <div><span>Worksheet</span><strong>{{ sheet_name }}</strong></div>
-                <div><span>Recipients</span><strong>{{ recipient_count }}</strong></div>
-            </div>
-        </section>
-
-        <!-- LIVE DATA PREVIEW COMPONENT -->
         <section class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h2>Live Email Preview</h2>
                     <p id="preview-counter" style="margin: 0; color: var(--text-muted);">Loading preview data...</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="button outline" style="padding: 6px 16px; font-weight: bold;" onclick="changePreview(-1)">← Prev</button>
-                    <button type="button" class="button outline" style="padding: 6px 16px; font-weight: bold;" onclick="changePreview(1)">Next →</button>
+                    <button type="button" class="button outline" style="padding: 6px 16px;" onclick="changePreview(-1)">← Prev</button>
+                    <button type="button" class="button outline" style="padding: 6px 16px;" onclick="changePreview(1)">Next →</button>
                 </div>
             </div>
             
-            <div style="border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; margin-top: 15px;">
+            <div style="border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px;">
                 <div style="background: var(--box-bg); padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem;">
                     <div style="margin-bottom: 8px;">
                         <strong style="color: var(--text-muted); width: 70px; display: inline-block;">To:</strong> 
                         <span id="preview-to-display" style="color: var(--g-blue); font-weight: bold;">Loading...</span>
                     </div>
-                    {% if cc %}
+                    {% if cc_emails %}
                     <div style="margin-bottom: 8px;">
                         <strong style="color: var(--text-muted); width: 70px; display: inline-block;">Cc:</strong> 
-                        <span style="color: var(--g-text);">{{ cc | join(', ') }}</span>
+                        <span style="color: var(--g-text);">{{ cc_emails | join(', ') }}</span>
+                    </div>
+                    {% endif %}
+                    {% if bcc_emails %}
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: var(--text-muted); width: 70px; display: inline-block;">Bcc:</strong> 
+                        <span style="color: var(--g-text);">{{ bcc_emails | join(', ') }}</span>
+                    </div>
+                    {% endif %}
+                    {% if attachments %}
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: var(--text-muted); width: 70px; display: inline-block;">Attach:</strong> 
+                        <span style="color: var(--g-text);">{{ attachments | join(', ') }}</span>
                     </div>
                     {% endif %}
                     <div>
@@ -351,47 +321,24 @@
                     {{ html|safe }}
                 </div>
             </div>
-            
-            <script type="application/json" id="previewDataJson">
-                {{ preview_data_json | safe }}
-            </script>
-        </section>
-
-        <!-- Target Recipients Scroll Box (Now a vertical list) -->
-        <section class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2>Targeted Recipients</h2>
-                    <p style="color: var(--text-muted);">The following addresses will receive the email.</p>
-                </div>
-                <span class="status">{{ recipient_count }} recipients found</span>
-            </div>
-            
-            <div class="recipients-scroll-box" style="padding: 0;">
-                <ul style="list-style: none; margin: 0; padding: 0;">
-                    {% for email in recipients %}
-                        <li style="padding: 12px 20px; border-bottom: 1px solid var(--border-color); color: var(--g-text); font-size: 0.95rem;">
-                            {{ email }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <script type="application/json" id="previewDataJson">{{ preview_data_json | safe }}</script>
         </section>
 
         <section class="card" style="border: 2px solid var(--g-red); background: var(--danger-bg);">
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="color: var(--g-red); margin: 0 0 10px 0;">Ready to send?</h2>
-                <p style="color: var(--text-muted); margin: 0;">This action will immediately send <strong>{{ recipient_count }}</strong> emails via Microsoft Graph.</p>
+                <p style="color: var(--text-muted); margin: 0;">This will queue <strong>{{ recipient_count }}</strong> emails.</p>
             </div>
-            <form action="{{ url_for('send_emails') }}" method="POST" onsubmit="return confirm('Are you sure you want to send these emails?');" style="text-align: center;">
+            <form action="{{ url_for('start_send') }}" method="POST" onsubmit="return confirm('Initiate Mass Email?');" style="text-align: center;">
                 <input type="hidden" name="subject" value="{{ subject }}">
                 <input type="hidden" name="importance" value="{{ importance }}">
                 <input type="hidden" name="html" value="{{ html }}">
                 <input type="hidden" name="email_column" value="{{ email_column }}">
-                {% for c in cc %}
-                    <input type="hidden" name="cc" value="{{ c }}">
-                {% endfor %}
-                <button type="submit" class="button danger" style="font-size: 1.2rem; padding: 15px 40px;">Send {{ recipient_count }} Emails Now</button>
+                <input type="hidden" name="total_count" value="{{ recipient_count }}">
+                {% for e in cc_emails %}<input type="hidden" name="cc_emails" value="{{ e }}">{% endfor %}
+                {% for e in bcc_emails %}<input type="hidden" name="bcc_emails" value="{{ e }}">{% endfor %}
+                {% for a in attachments %}<input type="hidden" name="attachments" value="{{ a }}">{% endfor %}
+                <button type="submit" class="button danger" style="font-size: 1.2rem; padding: 15px 40px;">Dispatch {{ recipient_count }} Emails Now</button>
             </form>
         </section>
 
@@ -404,159 +351,279 @@
     {% elif page == 4 %}
     <main class="main">
         <div class="page-header" style="margin-bottom: 30px; text-align: center;">
-            <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">Sending Complete</h1>
-            <p style="color: var(--text-muted); margin: 0;">Microsoft Graph email dispatch has finished processing.</p>
+            <h1 id="status-title" style="color: var(--g-blue); margin: 0 0 10px 0;">Processing Dispatch...</h1>
+            <p id="status-sub" style="color: var(--text-muted); margin: 0;">Your background worker is iterating through the payload.</p>
         </div>
 
-        <section class="result-summary">
-            <div class="result-box" style="border-top: 5px solid var(--g-green);">
-                <strong>{{ sent }}</strong>
-                <span style="color: var(--g-green); font-weight: bold;">Emails Sent</span>
+        <section class="card" style="text-align: center;">
+            <div class="progress-bar-container">
+                <div id="send-progress-bar" class="progress-bar-fill">0%</div>
             </div>
-            <div class="result-box" style="border-top: 5px solid var(--g-red);">
-                <strong>{{ failed }}</strong>
-                <span style="color: var(--g-red); font-weight: bold;">Emails Failed</span>
+            <div class="summary-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 20px;">
+                <div><span style="color: var(--g-green); font-weight: bold;">Sent</span><strong id="sent-count">0</strong></div>
+                <div><span style="color: var(--g-red); font-weight: bold;">Failed</span><strong id="failed-count">0</strong></div>
             </div>
         </section>
 
-        <section class="card">
-            <div class="card-header">
-                <h2>Detailed Log</h2>
-            </div>
+        <section class="card" id="log-section" style="display: none;">
+            <div class="card-header"><h2>Detailed Log</h2></div>
             <div class="recipients-scroll-box" style="padding: 0;">
-                {% for result in results %}
-                    <div class="result-row" style="padding: 12px 20px;">
-                        <span style="color: var(--g-text);">{{ result.email }}</span>
-                        <strong class="{% if result.status == 'Sent' %}result-success{% else %}result-failed{% endif %}">
-                            {{ result.status }}
-                        </strong>
-                    </div>
-                {% endfor %}
+                <ul id="log-list" style="list-style: none; margin: 0; padding: 0;"></ul>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{{ url_for('index') }}" class="button primary" style="padding: 15px 40px;">Start New Campaign</a>
             </div>
         </section>
 
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="{{ url_for('index') }}" class="button primary" style="padding: 15px 40px; font-size: 1.1rem;">Start New Campaign</a>
-        </div>
+        <script>
+            const taskId = "{{ task_id }}";
+            const pollInterval = setInterval(() => {
+                fetch(`/task-status/${taskId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'not_found') return clearInterval(pollInterval);
+                        
+                        let percent = 0;
+                        if(data.total > 0) percent = Math.round(((data.sent + data.failed) / data.total) * 100);
+                        
+                        document.getElementById('send-progress-bar').style.width = percent + '%';
+                        document.getElementById('send-progress-bar').innerText = percent + '%';
+                        document.getElementById('sent-count').innerText = data.sent;
+                        document.getElementById('failed-count').innerText = data.failed;
+
+                        if (data.status === 'completed' || data.status === 'error') {
+                            clearInterval(pollInterval);
+                            document.getElementById('status-title').innerText = "Sending Complete";
+                            document.getElementById('status-sub').innerText = "Microsoft Graph dispatch has finished processing.";
+                            
+                            const logList = document.getElementById('log-list');
+                            data.results.forEach(res => {
+                                const color = res.status === 'Sent' ? 'var(--g-green)' : 'var(--g-red)';
+                                logList.innerHTML += `<li style="padding: 12px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;"><span style="color: var(--g-text);">${res.email}</span><strong style="color: ${color};">${res.status}</strong></li>`;
+                            });
+                            document.getElementById('log-section').style.display = 'block';
+                            
+                            let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
+                            campaigns.push({ date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sent: data.sent, failed: data.failed });
+                            sessionStorage.setItem('gdgoc_campaigns', JSON.stringify(campaigns));
+                        }
+                    });
+            }, 1000);
+        </script>
     </main>
     {% endif %}
-
 </div>
 
-<footer class="g-footer">
-    All rights reserved. GDGoC USM Email Application
-</footer>
-
-<!-- DARK MODE TOGGLE FAB -->
-<button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
-    🌙
-</button>
+<button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
 
 <script>
 let htmlMode = false;
 let codeMirrorEditor = null;
+let savedGlobalEmails = [];
 
-// ==========================================
-// DARK MODE THEME TOGGLE
-// ==========================================
-function updateThemeIcon() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    document.getElementById('theme-toggle').innerText = currentTheme === 'dark' ? '☀️' : '🌙';
-}
-
+function updateThemeIcon() { document.getElementById('theme-toggle').innerText = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
 function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('gdgoc_theme', newTheme);
     updateThemeIcon();
 }
 
-// ==========================================
-// UI TRANSITION LOGIC (HERO FADE OUT)
-// ==========================================
-window.addEventListener('scroll', () => {
-    const hero = document.getElementById('hero');
-    if (hero) {
-        const scrollPos = window.scrollY;
-
-        if (scrollPos > 15) {
-            hero.classList.add('is-scrolling');
-        } else {
-            hero.classList.remove('is-scrolling');
+function removeAttachment(filename, chipId) {
+    fetch("/api/remove-attachment", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "filename=" + encodeURIComponent(filename)
+    }).then(res => res.json()).then(data => {
+        if(data.success) {
+            document.getElementById(chipId).remove();
         }
+    });
+}
 
-        const heroHeight = hero.offsetHeight;
-        let textOpacity = 1 - (scrollPos / (heroHeight * 0.5)); 
+function setupChipInput(containerId, fieldName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const input = container.querySelector('.email-input-field');
+    const dropdown = container.querySelector('.email-dropdown');
+    const wrapper = container.querySelector('.chip-wrapper');
+
+    function addChip(email) {
+        email = email.trim();
+        if (!email) return;
+        if (container.querySelector(`input[value="${email}"]`)) return;
+
+        const chip = document.createElement('div');
+        chip.className = 'email-chip';
+        chip.innerHTML = `<span>${email}</span><span class="remove" onclick="this.parentElement.remove()">×</span>`;
         
-        Array.from(hero.children).forEach(child => {
-            child.style.opacity = Math.max(0, textOpacity);
-        });
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = fieldName;
+        hidden.value = email;
+        chip.appendChild(hidden);
+        
+        wrapper.insertBefore(chip, input);
+        input.value = '';
+        dropdown.style.display = 'none';
+
+        if (!savedGlobalEmails.includes(email)) {
+            savedGlobalEmails.push(email);
+            fetch(document.body.dataset.saveCcUrl, { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: "email=" + encodeURIComponent(email) });
+        }
+    }
+
+    input.addEventListener('focus', () => {
+        let addedCount = 0;
+        dropdown.innerHTML = '<div style="padding: 10px 15px; font-weight: bold; font-size: 0.85rem; color: var(--text-muted);">Suggested contacts</div>';
+        
+        if (savedGlobalEmails.length > 0) {
+            savedGlobalEmails.forEach(email => {
+                if (!container.querySelector(`input[type="hidden"][value="${email}"]`)) {
+                    const initial = email.substring(0, 2).toUpperCase();
+                    const item = document.createElement('div');
+                    item.className = 'email-dropdown-item';
+                    item.innerHTML = `<div class="avatar">${initial}</div><div>${email}</div>`;
+                    item.onmousedown = (e) => { e.preventDefault(); addChip(email); };
+                    dropdown.appendChild(item);
+                    addedCount++;
+                }
+            });
+        }
+        dropdown.style.display = addedCount > 0 ? 'block' : 'none';
+    });
+
+    input.addEventListener('blur', () => dropdown.style.display = 'none');
+    
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addChip(input.value);
+        } else if (e.key === 'Backspace' && input.value === '') {
+            const chips = wrapper.querySelectorAll('.email-chip');
+            if (chips.length > 0) chips[chips.length - 1].remove();
+        }
+    });
+    
+    container.addChipManual = addChip;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateThemeIcon();
+    const bodyData = document.body.dataset;
+    
+    if (parseInt(bodyData.page) === 1) {
+        sessionStorage.removeItem('gdgoc_editor_state');
+        const list = document.getElementById('campaign-list');
+        if (list) {
+            let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
+            if (campaigns.length > 0) {
+                list.innerHTML = '';
+                campaigns.forEach((c, index) => {
+                    list.innerHTML += `<li class="campaign-item"><span><strong style="color: var(--g-blue); font-size: 1.1rem;">Campaign ${index + 1}</strong> <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 10px;">${c.date}</span></span><span style="background: var(--box-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;"><strong style="color: var(--g-green)">Sent: ${c.sent}</strong> &nbsp;|&nbsp; <strong style="color: var(--g-red)">Failed: ${c.failed}</strong></span></li>`;
+                });
+            }
+        }
+        if (bodyData.hasConfig === 'true') document.getElementById('campaigns')?.scrollIntoView();
+    }
+
+    if (parseInt(bodyData.page) === 2) {
+        try { savedGlobalEmails = JSON.parse(document.getElementById('saved-emails-data').textContent); } catch(e) {}
+        
+        setupChipInput('cc-container', 'cc_emails');
+        setupChipInput('bcc-container', 'bcc_emails');
+
+        const savedState = sessionStorage.getItem('gdgoc_editor_state');
+        if (savedState) {
+            try {
+                const data = JSON.parse(savedState);
+                if (data.subject) document.getElementById("subject").value = data.subject;
+                if (data.html) {
+                    document.getElementById("wysiwygEditor").innerHTML = data.html;
+                    document.getElementById("htmlEditor").value = data.html;
+                }
+                if (data.importance) {
+                    const select = document.querySelector("select[name='importance']");
+                    if (select) select.value = data.importance;
+                }
+                if (data.email_column) {
+                    const select = document.querySelector("select[name='email_column']");
+                    if (select) select.value = data.email_column;
+                }
+                if (data.cc_emails) {
+                    const ccCont = document.getElementById('cc-container');
+                    data.cc_emails.forEach(e => ccCont.addChipManual(e));
+                }
+                if (data.bcc_emails) {
+                    const bccCont = document.getElementById('bcc-container');
+                    data.bcc_emails.forEach(e => bccCont.addChipManual(e));
+                }
+            } catch (err) {}
+        }
+    }
+
+    if (parseInt(bodyData.page) === 3) {
+        const jsonBlock = document.getElementById("previewDataJson");
+        if (jsonBlock) {
+            previewData = JSON.parse(jsonBlock.textContent);
+            if(previewData.length > 0) renderLivePreview();
+        }
     }
 });
 
-// ==========================================
-// LIVE PREVIEW PAGINATION (PAGE 3)
-// ==========================================
 let currentPreviewIndex = 0;
 let previewData = [];
 
-function loadLivePreviewData() {
-    const jsonBlock = document.getElementById("previewDataJson");
-    if (jsonBlock) {
-        try {
-            previewData = JSON.parse(jsonBlock.textContent);
-            if (previewData && previewData.length > 0) {
-                renderLivePreview();
-            }
-        } catch(e) {
-            console.error("Failed to load live preview data:", e);
-        }
-    }
-}
+function toggleNewCampaign() { document.getElementById('new-campaign-container').classList.remove('hidden'); }
+function scrollToCampaigns() { document.getElementById('campaigns').scrollIntoView({ behavior: 'smooth' }); }
 
 function renderLivePreview() {
-    if (!previewData || previewData.length === 0) return;
-    
-    const rawSubject = document.querySelector("input[name='subject']").value;
-    const rawHtml = document.querySelector("input[name='html']").value;
-    
+    if (!previewData.length) return;
     const person = previewData[currentPreviewIndex];
-    let liveSubject = rawSubject;
-    let liveHtml = rawHtml;
-    
-    for (const [columnKey, cellValue] of Object.entries(person.data)) {
-        const placeholder = "{" + "{" + columnKey + "}" + "}"; 
-        liveSubject = liveSubject.split(placeholder).join(cellValue);
-        liveHtml = liveHtml.split(placeholder).join(cellValue);
+    let liveSubject = document.querySelector("input[name='subject']").value;
+    let liveHtml = document.querySelector("input[name='html']").value;
+    for (const [col, val] of Object.entries(person.data)) {
+        const ph = "{{" + col + "}}";
+        liveSubject = liveSubject.split(ph).join(val);
+        liveHtml = liveHtml.split(ph).join(val);
     }
-    
     document.getElementById('preview-subject-display').innerText = liveSubject;
     document.getElementById('preview-body-display').innerHTML = liveHtml;
-    
-    const toDisplay = document.getElementById('preview-to-display');
-    if (toDisplay) toDisplay.innerText = person.email;
-    
+    document.getElementById('preview-to-display').innerText = person.email;
     document.getElementById('preview-counter').innerHTML = `<strong>Recipient ${currentPreviewIndex + 1} of ${previewData.length}</strong>`;
 }
 
 function changePreview(direction) {
-    if (!previewData || previewData.length === 0) return;
-    
-    currentPreviewIndex += direction;
-    
-    if (currentPreviewIndex < 0) {
-        currentPreviewIndex = previewData.length - 1;
-    } else if (currentPreviewIndex >= previewData.length) {
-        currentPreviewIndex = 0;
-    }
-    
+    currentPreviewIndex = (currentPreviewIndex + direction + previewData.length) % previewData.length;
     renderLivePreview();
 }
 
-// ==========================================
-// IMPORT & EXPORT SAVED CAMPAIGN LOGIC
-// ==========================================
+function insertDynamic(colName) {
+    const value = "{{" + colName + "}}"; 
+    let subject = document.getElementById("subject");
+    if (document.activeElement === subject) {
+        let start = subject.selectionStart;
+        subject.value = subject.value.substring(0, start) + value + subject.value.substring(subject.selectionEnd);
+        return;
+    }
+    if (htmlMode && codeMirrorEditor) { codeMirrorEditor.replaceSelection(value); return; }
+    document.getElementById("wysiwygEditor").focus();
+    document.execCommand("insertText", false, value);
+}
+
+function toggleEditor() {
+    let visual = document.getElementById("wysiwygEditor"), textarea = document.getElementById("htmlEditor"), button = document.getElementById("editorToggle");
+    if (!htmlMode) {
+        textarea.value = visual.innerHTML; textarea.hidden = false; visual.style.display = "none";
+        codeMirrorEditor = CodeMirror.fromTextArea(textarea, { mode: "htmlmixed", lineNumbers: true, lineWrapping: true });
+        button.innerText = "Visual View"; htmlMode = true;
+    } else {
+        visual.innerHTML = codeMirrorEditor.getValue(); codeMirrorEditor.toTextArea(); codeMirrorEditor = null;
+        textarea.hidden = true; visual.style.display = "block"; button.innerText = "HTML View"; htmlMode = false;
+    }
+}
+
 function exportCampaign() {
     const subject = document.getElementById("subject").value;
     const importance = document.querySelector("select[name='importance']").value;
@@ -569,26 +636,23 @@ function exportCampaign() {
         htmlContent = document.getElementById("wysiwygEditor").innerHTML;
     }
 
-    const checkedCcs = Array.from(document.querySelectorAll("input[name='cc'][type='checkbox']:checked")).map(cb => cb.value);
-    const hiddenCcs = Array.from(document.querySelectorAll("input[name='cc'][type='hidden']")).map(inp => inp.value);
-    const ccList = [...new Set([...checkedCcs, ...hiddenCcs])];
+    const ccList = Array.from(document.getElementById('cc-container').querySelectorAll("input[type='hidden']")).map(i => i.value);
+    const bccList = Array.from(document.getElementById('bcc-container').querySelectorAll("input[type='hidden']")).map(i => i.value);
 
-    const data = {
-        subject: subject,
-        importance: importance,
-        email_column: emailCol,
+    const data = { 
+        subject: subject, 
+        importance: importance, 
+        email_column: emailCol, 
         html: htmlContent,
-        cc: ccList
+        cc_emails: ccList,
+        bcc_emails: bccList
     };
-
+    
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "gdgoc_campaign_template.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = url; a.download = "gdgoc_campaign_template.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
@@ -600,7 +664,6 @@ function importCampaign(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            
             if (data.subject !== undefined) document.getElementById("subject").value = data.subject;
             if (data.importance !== undefined) document.querySelector("select[name='importance']").value = data.importance;
             
@@ -610,7 +673,7 @@ function importCampaign(event) {
                     sel.value = data.email_column;
                 }
             }
-
+            
             if (data.html !== undefined) {
                 if (htmlMode && codeMirrorEditor) {
                     codeMirrorEditor.setValue(data.html);
@@ -620,273 +683,50 @@ function importCampaign(event) {
                 document.getElementById("htmlEditor").value = data.html;
             }
 
-            if (data.cc && Array.isArray(data.cc)) {
-                document.getElementById("newCcContainer").innerHTML = "";
-                document.querySelectorAll("input[name='cc'][type='checkbox']").forEach(cb => {
-                    cb.checked = data.cc.includes(cb.value);
-                });
-                
-                data.cc.forEach(email => {
-                    const existingCb = document.querySelector(`input[name='cc'][type='checkbox'][value='${email}']`);
-                    if (!existingCb) {
-                        let container = document.getElementById("newCcContainer");
-                        let hidden = document.createElement("input"); 
-                        hidden.type = "hidden"; hidden.name = "cc"; hidden.value = email;
-                        container.appendChild(hidden);
-                        
-                        let label = document.createElement("div"); 
-                        label.style.color = "var(--g-green)";
-                        label.style.fontWeight = "bold";
-                        label.textContent = "✓ Added " + email;
-                        container.appendChild(label);
-                    }
+            const ccWrapper = document.querySelector('#cc-container .chip-wrapper');
+            if (ccWrapper) ccWrapper.querySelectorAll('.email-chip').forEach(c => c.remove());
+            const bccWrapper = document.querySelector('#bcc-container .chip-wrapper');
+            if (bccWrapper) bccWrapper.querySelectorAll('.email-chip').forEach(c => c.remove());
+
+            if (data.cc_emails && Array.isArray(data.cc_emails)) {
+                const ccCont = document.getElementById('cc-container');
+                data.cc_emails.forEach(email => {
+                    if (ccCont.addChipManual) ccCont.addChipManual(email);
                 });
             }
             
+            if (data.bcc_emails && Array.isArray(data.bcc_emails)) {
+                const bccCont = document.getElementById('bcc-container');
+                data.bcc_emails.forEach(email => {
+                    if (bccCont.addChipManual) bccCont.addChipManual(email);
+                });
+            }
+
             alert("Campaign loaded successfully!");
-        } catch (err) {
-            alert("Invalid campaign file.");
+        } catch (err) { 
+            console.error(err);
+            alert("Invalid campaign file."); 
         }
     };
     reader.readAsText(file);
     event.target.value = ""; 
 }
 
-// ==========================================
-// DOM LOAD - INITIALIZATIONS
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    
-    updateThemeIcon(); // Initialize correct toggle icon
-    
-    const bodyData = document.body.dataset;
-    const currentPage = parseInt(bodyData.page) || 1;
-    const hasConfigData = bodyData.hasConfig === 'true';
-
-    // Page 1 Logic
-    if (currentPage === 1) {
-        sessionStorage.removeItem('gdgoc_editor_state');
-
-        const list = document.getElementById('campaign-list');
-        if (list) {
-            let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
-            if (campaigns.length > 0) {
-                list.innerHTML = '';
-                campaigns.forEach((c, index) => {
-                    list.innerHTML += `
-                        <li class="campaign-item">
-                            <span><strong style="color: var(--g-blue); font-size: 1.1rem;">Campaign ${index + 1}</strong> <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 10px;">${c.date}</span></span>
-                            <span style="background: var(--box-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
-                                <strong style="color: var(--g-green)">Sent: ${c.sent}</strong> &nbsp;|&nbsp; <strong style="color: var(--g-red)">Failed: ${c.failed}</strong>
-                            </span>
-                        </li>
-                    `;
-                });
-            }
-        }
-        
-        if (hasConfigData) {
-            const campaignsSection = document.getElementById('campaigns');
-            if (campaignsSection) campaignsSection.scrollIntoView();
-        }
-    }
-
-    // Page 2 State Preservation
-    if (currentPage === 2) {
-        const savedState = sessionStorage.getItem('gdgoc_editor_state');
-        if (savedState) {
-            try {
-                const data = JSON.parse(savedState);
-                if (data.subject) document.getElementById("subject").value = data.subject;
-                if (data.importance) document.querySelector("select[name='importance']").value = data.importance;
-                
-                if (data.email_column) {
-                    const sel = document.querySelector("select[name='email_column']");
-                    if (Array.from(sel.options).some(opt => opt.value === data.email_column)) {
-                        sel.value = data.email_column;
-                    }
-                }
-                
-                if (data.html) {
-                    document.getElementById("wysiwygEditor").innerHTML = data.html;
-                    document.getElementById("htmlEditor").value = data.html;
-                }
-                
-                if (data.cc && Array.isArray(data.cc)) {
-                    document.querySelectorAll("input[name='cc'][type='checkbox']").forEach(cb => {
-                        cb.checked = data.cc.includes(cb.value);
-                    });
-                    
-                    data.cc.forEach(email => {
-                        const existingCb = document.querySelector(`input[name='cc'][type='checkbox'][value='${email}']`);
-                        if (!existingCb) {
-                            let container = document.getElementById("newCcContainer");
-                            if (!container.querySelector(`input[value='${email}']`)) {
-                                let hidden = document.createElement("input"); 
-                                hidden.type = "hidden"; hidden.name = "cc"; hidden.value = email;
-                                container.appendChild(hidden);
-                                
-                                let label = document.createElement("div"); 
-                                label.style.color = "var(--g-green)"; label.style.fontWeight = "bold"; label.style.marginTop = "5px";
-                                label.textContent = "✓ Added " + email;
-                                container.appendChild(label);
-                            }
-                        }
-                    });
-                }
-            } catch (err) {}
-        }
-    }
-
-    if (currentPage === 3) {
-        loadLivePreviewData();
-    }
-
-    if (currentPage === 4) {
-        sessionStorage.removeItem('gdgoc_editor_state');
-
-        let campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
-        campaigns.push({
-            date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            sent: parseInt(bodyData.sent) || 0,
-            failed: parseInt(bodyData.failed) || 0
-        });
-        sessionStorage.setItem('gdgoc_campaigns', JSON.stringify(campaigns));
-    }
-});
-
-function scrollToCampaigns() {
-    document.getElementById('campaigns').scrollIntoView({ behavior: 'smooth' });
-}
-
-function toggleNewCampaign() {
-    const container = document.getElementById('new-campaign-container');
-    container.classList.remove('hidden');
-    container.scrollIntoView({ behavior: 'smooth' });
-}
-
-// ==========================================
-// Existing Editor JS logic
-// ==========================================
-function addCc() {
-    let email = document.getElementById("newCc").value.trim();
-    if (!email) return;
-    
-    let container = document.getElementById("newCcContainer");
-    
-    let hidden = document.createElement("input"); 
-    hidden.type = "hidden"; 
-    hidden.name = "cc"; 
-    hidden.value = email;
-    container.appendChild(hidden);
-    
-    let label = document.createElement("div"); 
-    label.style.color = "var(--g-green)";
-    label.style.fontWeight = "bold";
-    label.style.marginTop = "5px";
-    label.textContent = "✓ Added " + email;
-    container.appendChild(label);
-    
-    document.getElementById("newCc").value = "";
-    
-    const saveCcUrl = document.body.dataset.saveCcUrl;
-    fetch(saveCcUrl, {
-        method: "POST", 
-        headers: {"Content-Type": "application/x-www-form-urlencoded"}, 
-        body: "email=" + encodeURIComponent(email)
-    });
-}
-
-function insertDynamic(colName) {
-    const value = "{" + "{" + colName + "}" + "}"; 
-    
-    let subject = document.getElementById("subject");
-    if (document.activeElement === subject) {
-        let start = subject.selectionStart;
-        subject.value = subject.value.substring(0, start) + value + subject.value.substring(subject.selectionEnd);
-        subject.focus(); 
-        subject.selectionStart = subject.selectionEnd = start + value.length; 
-        return;
-    }
-    
-    if (htmlMode && codeMirrorEditor) { 
-        codeMirrorEditor.replaceSelection(value); 
-        codeMirrorEditor.focus(); 
-        return; 
-    }
-    
-    let editor = document.getElementById("wysiwygEditor"); 
-    editor.focus(); 
-    document.execCommand("insertText", false, value);
-}
-
-function toggleEditor() {
-    let visual = document.getElementById("wysiwygEditor");
-    let textarea = document.getElementById("htmlEditor");
-    let button = document.getElementById("editorToggle");
-    let modeLabel = document.getElementById("editorMode");
-    
-    if (!htmlMode) {
-        textarea.value = visual.innerHTML; 
-        textarea.hidden = false; 
-        visual.style.display = "none";
-        codeMirrorEditor = CodeMirror.fromTextArea(textarea, {
-            mode: "htmlmixed", 
-            lineNumbers: true, 
-            lineWrapping: true
-        });
-        button.innerText = "Visual View"; 
-        modeLabel.innerText = "HTML Source Active"; 
-        htmlMode = true;
-    } else {
-        visual.innerHTML = codeMirrorEditor.getValue(); 
-        codeMirrorEditor.toTextArea(); 
-        codeMirrorEditor = null;
-        textarea.hidden = true; 
-        visual.style.display = "block"; 
-        button.innerText = "HTML View"; 
-        modeLabel.innerText = "Visual Editor Active"; 
-        htmlMode = false;
-    }
-}
-
 const emailForm = document.getElementById("emailForm");
 if (emailForm) {
     emailForm.addEventListener("submit", function() {
         let textarea = document.getElementById("htmlEditor");
-        if (htmlMode && codeMirrorEditor) {
-            textarea.value = codeMirrorEditor.getValue();
-        } else {
-            textarea.value = document.getElementById("wysiwygEditor").innerHTML;
-        }
-
-        const checkedCcs = Array.from(document.querySelectorAll("input[name='cc'][type='checkbox']:checked")).map(cb => cb.value);
-        const hiddenCcs = Array.from(document.querySelectorAll("input[name='cc'][type='hidden']")).map(inp => inp.value);
-        const ccList = [...new Set([...checkedCcs, ...hiddenCcs])];
-
-        const editorState = {
-            subject: document.getElementById("subject").value,
+        textarea.value = (htmlMode && codeMirrorEditor) ? codeMirrorEditor.getValue() : document.getElementById("wysiwygEditor").innerHTML;
+        
+        sessionStorage.setItem('gdgoc_editor_state', JSON.stringify({ 
+            subject: document.getElementById("subject").value, 
+            html: textarea.value,
             importance: document.querySelector("select[name='importance']").value,
             email_column: document.querySelector("select[name='email_column']").value,
-            html: textarea.value,
-            cc: ccList
-        };
-        sessionStorage.setItem('gdgoc_editor_state', JSON.stringify(editorState));
+            cc_emails: Array.from(document.getElementById('cc-container').querySelectorAll("input[type='hidden']")).map(i => i.value),
+            bcc_emails: Array.from(document.getElementById('bcc-container').querySelectorAll("input[type='hidden']")).map(i => i.value)
+        }));
     });
-}
-
-function toggleVisibility(inputId, btnElement) {
-    const input = document.getElementById(inputId);
-    const eyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-    const eyeOn = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-
-    if (input.type === "password") {
-        input.type = "text";
-        btnElement.innerHTML = eyeOff; 
-    } else {
-        input.type = "password";
-        btnElement.innerHTML = eyeOn; 
-    }
 }
 </script>
 </body>

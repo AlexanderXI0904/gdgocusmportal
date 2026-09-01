@@ -5,87 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Microsoft Authentication - GDGoC</title>
     
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script>
+        const savedTheme = localStorage.getItem('gdgoc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        .device-code-box {
+            font-family: 'EditorFont', monospace !important; 
+            font-size: 2.5rem;
+            letter-spacing: 6px;
+            background: var(--box-bg);
+            border: 2px dashed var(--g-blue);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 25px 0 10px 0;
+            color: var(--g-text);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            position: relative;
+        }
+        .device-code-box:hover {
+            background: var(--light-blue);
+        }
+        .device-code-box:active {
+            transform: scale(0.98);
+        }
+        .copy-hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            text-align: center;
+            height: 20px;
+        }
+    </style>
 </head>
-
-<body data-page="auth">
+<body>
 
 <header class="g-header">
     <div class="user-logo">
-        <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo" style="height: 45px; border-radius: 50%;">
+        <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
     </div>
-    
     <div class="g-logo">
-        <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo" style="height: 40px;">
+        <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo">
     </div>
 </header>
 
-<main class="main" style="display: flex; justify-content: center; align-items: center; flex-grow: 1; margin: 60px auto;">
-
-    <section class="card" style="width: 100%; max-width: 500px; text-align: center; padding: 40px 30px;">
+<main class="main" style="max-width: 600px; margin-top: 60px;">
+    <section class="card" style="text-align: center;">
+        <h2 style="color: var(--g-blue); margin-bottom: 10px;">Microsoft Authentication</h2>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Please authenticate this device to send emails.</p>
         
-        <div class="card-header" style="margin-bottom: 25px;">
-            <h2 style="font-size: 1.8rem; margin-bottom: 10px;">Action Required</h2>
-            <p>A secure sign-in code has been generated. Open the Microsoft login portal and enter the code below to connect your account.</p>
+        <div class="device-code-box" onclick="copyCode()" title="Click to copy code">
+            {{ flow.user_code }}
+        </div>
+        <div class="copy-hint" id="copyHint">Click the code above to copy it</div>
+        
+        <div style="color: var(--g-text); margin-bottom: 30px; text-align: left; background: var(--body-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <strong>Instructions:</strong>
+            <ol style="margin-top: 10px; margin-bottom: 0; padding-left: 20px;">
+                <li style="margin-bottom: 8px;">Copy the code displayed above.</li>
+                <li style="margin-bottom: 8px;">Click the button below to open Microsoft's login portal.</li>
+                <li>Paste the code and sign in with your account.</li>
+            </ol>
         </div>
 
-        <div style="background: #e8f0fe; border: 2px dashed var(--g-blue); border-radius: 8px; padding: 25px 20px; margin: 25px 0;">
-            <small style="display: block; color: var(--g-blue); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; margin-bottom: 10px;">
-                Authentication Code
-            </small>
-            
-            <div id="authCode" style="font-size: 2.2rem; font-weight: bold; color: var(--g-text); letter-spacing: 4px; font-family: monospace;">
-                {{ flow.user_code }}
-            </div>
-            
-            <button class="button outline" onclick="copyCode()" id="copyBtn" style="margin-top: 15px; padding: 8px 16px; font-size: 0.9rem; border: none; background: transparent; text-decoration: underline;">
-                📋 Copy Code
-            </button>
-        </div>
-
-        <a href="{{ flow.verification_uri }}" target="_blank" class="button primary" style="width: 100%; margin-bottom: 15px; box-sizing: border-box;">
-            1. Open Microsoft Login
-        </a>
-
-        <form action="{{ url_for('complete_authentication') }}" method="POST">
-            <button type="submit" class="button secondary" style="width: 100%; box-sizing: border-box; background: var(--g-green); color: white; border: none;">
-                2. I Have Completed Sign-In
-            </button>
+        <a href="{{ flow.verification_uri }}" target="_blank" class="button primary" style="font-size: 1.1rem; padding: 15px 40px; margin-bottom: 25px; display: inline-block;">Open Microsoft Login</a>
+        
+        <form action="{{ url_for('complete_authentication') }}" method="POST" style="border-top: 1px solid var(--border-color); padding-top: 25px;">
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px;">Only click Verify <strong>after</strong> you have successfully signed in on the Microsoft tab.</p>
+            <button type="submit" class="button secondary" style="width: 100%; padding: 15px;">Verify Authentication</button>
         </form>
-
-        <p style="font-size: 0.85rem; color: #80868b; margin-top: 20px; font-style: italic;">
-            Wait for the Microsoft window to confirm success before clicking step 2.
-        </p>
-
     </section>
-
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('index') }}" class="button outline">← Cancel</a>
+    </div>
 </main>
-
-<footer class="g-footer">
-    All rights reserved. GDGoC Email Application
-</footer>
 
 <script>
     function copyCode() {
-        const codeText = document.getElementById('authCode').innerText;
-        
-        navigator.clipboard.writeText(codeText).then(() => {
-            const btn = document.getElementById('copyBtn');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '✅ Copied!';
-            btn.style.color = 'var(--g-green)';
-            btn.style.textDecoration = 'none';
-            
+        const code = "{{ flow.user_code }}".trim();
+        navigator.clipboard.writeText(code).then(() => {
+            const hint = document.getElementById('copyHint');
+            hint.innerHTML = '<span style="color: var(--g-green); font-weight: bold;">✓ Code copied to clipboard!</span>';
             setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.color = '';
-                btn.style.textDecoration = 'underline';
+                hint.innerHTML = 'Click the code above to copy it';
             }, 2500);
         }).catch(err => {
             console.error('Failed to copy text: ', err);
-            alert("Failed to copy automatically. Please select the text and copy manually.");
         });
     }
 </script>
