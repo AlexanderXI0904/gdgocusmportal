@@ -59,38 +59,58 @@ body {
 
 /* Header & Footer */
 .g-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background: #ffffff; 
-    padding: 15px 30px; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-    position: sticky; 
-    top: 0; 
-    z-index: 1000; 
-    border-bottom: none; /* Removed the top dividing line */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--header-bg);
+    padding: 15px 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.g-header .user-logo img { 
-    height: 45px; 
-    width: 45px; 
-    border-radius: 50%; 
-    object-fit: cover; 
-    display: block; 
-    border: 1px solid #dadce0; 
-    padding: 2px; 
-    background: #ffffff; 
+.g-header .user-logo img {
+    height: 45px;
+    width: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 1px solid #dadce0;
+    padding: 2px;
+    background: #ffffff;
 }
 
-.g-header .g-logo { 
-    display: flex; 
-    align-items: center; 
+.g-header .g-logo {
+    display: flex;
+    align-items: center;
 }
 
-.g-header .g-logo img { 
-    height: 40px; 
-    width: auto; 
-    object-fit: contain; 
+.g-header .g-logo img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    transition: opacity 0.3s ease;
+}
+
+/* Theme colours */
+:root {
+    --header-bg: var(--card-bg);
+}
+
+[data-theme="dark"] {
+    --header-bg: var(--g-dark);
+}
+
+/* Swap GDGoC logo */
+.g-header .g-logo img {
+    content: url("/static/right-logo.png");
+}
+
+[data-theme="dark"] .g-header .g-logo img {
+    content: url("/static/right-logo-2.png");
 }
 
 .g-footer { 
