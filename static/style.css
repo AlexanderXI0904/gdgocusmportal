@@ -15,7 +15,7 @@
     --g-green: #34a853;
     --g-yellow: #f9ab00;
     --g-red: #ea4335;
-    --g-dark: #1a1a1d;
+    --g-dark: #1e1e1e;
     --body-bg: #f0f0f0;
     --card-bg: #ffffff;
     --box-bg: #f8f9fa;
@@ -32,7 +32,7 @@
 [data-theme="dark"] {
     --body-bg: #000000; /* Pure black */
     --card-bg: #1e1e1e;
-    --box-bg: #2d2d2d;
+    --box-bg: #1e1e1e;
     --border-color: #383b40;
     --g-text: #e8eaed;
     --text-muted: #9aa0a6;
