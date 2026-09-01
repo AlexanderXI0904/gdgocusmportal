@@ -16,6 +16,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 CONFIG_DIR = BASE_DIR / "config"
 CONFIG_DIR.mkdir(exist_ok=True)
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
+CACHE_FILE = CONFIG_DIR / "msal_cache.json"
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "gdgoc28usm08email26sender2501key")
@@ -33,10 +34,7 @@ def cleanup_uploads():
             except Exception:
                 pass
 
-# Register the function to trigger automatically when the app closes
 atexit.register(cleanup_uploads)
-
-# Trigger it once on startup to clear any files left from a previous crash
 cleanup_uploads()
 
 DEFAULT_SETTINGS = {
@@ -46,7 +44,7 @@ DEFAULT_SETTINGS = {
 }
 
 # ============================================================
-# SETTINGS
+# SETTINGS & CACHE (CLI-STYLE PERSISTENCE)
 # ============================================================
 def load_settings():
     if not SETTINGS_FILE.exists():
@@ -65,10 +63,25 @@ def save_settings(settings):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(settings, f, indent=4)
 
+def load_cache():
+    cache = msal.SerializableTokenCache()
+    if CACHE_FILE.exists():
+        try:
+            with open(CACHE_FILE, "r") as f:
+                cache.deserialize(f.read())
+        except Exception:
+            pass
+    return cache
+
+def save_cache(cache):
+    if cache.has_state_changed:
+        with open(CACHE_FILE, "w") as f:
+            f.write(cache.serialize())
+
 # ============================================================
 # MICROSOFT AUTH
 # ============================================================
-def get_msal_app():
+def get_msal_app(cache=None):
     settings = load_settings()
     client_id = settings.get("client_id")
     tenant_id = settings.get("tenant_id")
@@ -77,7 +90,23 @@ def get_msal_app():
         return None
         
     authority = f"https://login.microsoftonline.com/{tenant_id}"
-    return msal.PublicClientApplication(client_id, authority=authority)
+    return msal.PublicClientApplication(client_id, authority=authority, token_cache=cache)
+
+def get_access_token():
+    """Silently fetches a token using the saved file cache, bypassing login if valid."""
+    cache = load_cache()
+    app = get_msal_app(cache)
+    if not app:
+        return None
+        
+    accounts = app.get_accounts()
+    if accounts:
+        result = app.acquire_token_silent(["https://graph.microsoft.com/Mail.Send"], account=accounts[0])
+        if result and "access_token" in result:
+            save_cache(cache)
+            return result["access_token"]
+            
+    return None
 
 # ============================================================
 # EXCEL HELPERS
@@ -173,7 +202,7 @@ def get_row_data(ws, row_number):
 @app.route("/")
 def index():
     settings = load_settings()
-    authenticated = bool(session.get("access_token"))
+    authenticated = bool(get_access_token())
     sheets = []
     columns = []
 
@@ -207,7 +236,9 @@ def save_ms_settings():
     settings["tenant_id"] = request.form.get("tenant_id", "").strip()
     
     save_settings(settings)
-    session.pop("access_token", None)
+    if CACHE_FILE.exists():
+        CACHE_FILE.unlink()
+        
     flash("Microsoft settings saved.", "success")
     return redirect(url_for("index"))
 
@@ -230,7 +261,8 @@ def authenticate():
 
 @app.route("/complete-authentication", methods=["POST"])
 def complete_authentication():
-    msal_app = get_msal_app()
+    cache = load_cache()
+    msal_app = get_msal_app(cache)
     flow = session.get("device_flow")
     
     if not msal_app or not flow:
@@ -242,21 +274,22 @@ def complete_authentication():
         flash(result.get("error_description", "Authentication failed."), "error")
         return redirect(url_for("index"))
 
-    session["access_token"] = result["access_token"]
+    save_cache(cache)
     session.pop("device_flow", None)
     flash("Microsoft authentication successful.", "success")
     return redirect(url_for("index"))
 
 @app.route("/logout")
 def logout():
-    session.pop("access_token", None)
+    if CACHE_FILE.exists():
+        CACHE_FILE.unlink()
     session.pop("device_flow", None)
     flash("Signed out successfully.", "success")
     return redirect(url_for("index"))
 
 @app.route("/upload-excel", methods=["POST"])
 def upload_excel():
-    if not session.get("access_token"):
+    if not get_access_token():
         flash("Please authenticate with Microsoft first.", "error")
         return redirect(url_for("index"))
 
@@ -321,7 +354,7 @@ def save_cc():
 
 @app.route("/editor")
 def editor():
-    if not session.get("access_token"):
+    if not get_access_token():
         flash("Please authenticate first.", "error")
         return redirect(url_for("index"))
     
@@ -416,10 +449,10 @@ def preview():
 
 @app.route("/send-emails", methods=["POST"])
 def send_emails():
-    access_token = session.get("access_token")
+    access_token = get_access_token()
     
     if not access_token:
-        flash("Microsoft authentication expired.", "error")
+        flash("Microsoft authentication expired. Please sign in again.", "error")
         return redirect(url_for("index"))
         
     subject_template = request.form.get("subject", "").strip()
@@ -519,12 +552,4 @@ def send_emails():
     return render_template("index.html", page=4, sent=sent, failed=failed, results=results)
 
 if __name__ == "__main__":
-
     app.run(host="127.0.0.1", port=5000, debug=True)
-
-'''
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000))
-    )
-'''

@@ -7,6 +7,8 @@ __pycache__/
 venv/
 .venv/
 env/
+.env
+.env.*
 
 # Flask
 instance/
@@ -16,7 +18,7 @@ uploads/*
 !uploads/.gitkeep
 
 # Local configuration
-config/settings.json
+config/
 settings.json
 
 # Secrets
