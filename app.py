@@ -255,6 +255,12 @@ def background_worker(task_id, access_token, subject_template, importance, html_
                     time.sleep(0.2)
                     success = True
                     break
+                elif resp.status_code == 401:
+                    # Token expired mid-batch, refresh and retry
+                    new_token = get_access_token()
+                    if new_token:
+                        headers_http["Authorization"] = f"Bearer {new_token}"
+                    time.sleep(1)
                 elif resp.status_code == 429:
                     retry_after = int(resp.headers.get("Retry-After", 2))
                     time.sleep(retry_after + 1)
@@ -326,14 +332,14 @@ def save_ms_settings():
     if CACHE_FILE.exists(): 
         CACHE_FILE.unlink()
     flash("Microsoft settings saved.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _anchor="campaigns"))
 
 @app.route("/authenticate")
 def authenticate():
     msal_app = get_msal_app()
     if not msal_app:
         flash("Please save your Client ID and Tenant ID first.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
         
     flow = msal_app.initiate_device_flow(scopes=["https://graph.microsoft.com/Mail.Send"])
     session["device_flow"] = flow
@@ -347,7 +353,7 @@ def complete_authentication():
     
     if not msal_app or not flow:
         flash("Authentication configuration or flow state missing.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
         
     result = msal_app.acquire_token_by_device_flow(flow)
     
@@ -357,14 +363,14 @@ def complete_authentication():
         flash("Authentication successful.", "success")
     else:
         flash("Authentication failed.", "error")
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _anchor="campaigns"))
 
 @app.route("/logout")
 def logout():
     if CACHE_FILE.exists(): 
         CACHE_FILE.unlink()
     flash("Signed out successfully.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _anchor="campaigns"))
 
 @app.route("/upload-excel", methods=["POST"])
 def upload_excel():
@@ -386,12 +392,12 @@ def upload_excel():
         session.pop("attachments", None)
         flash(f"Excel file '{filename}' uploaded.", "success")
         
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _anchor="campaigns"))
 
 @app.route("/select-sheet", methods=["POST"])
 def select_sheet():
     session["sheet_name"] = request.form.get("sheet_name", "").strip()
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _anchor="campaigns"))
 
 @app.route("/save-cc", methods=["POST"])
 def save_cc():
@@ -423,7 +429,7 @@ def api_remove_attachment():
 @app.route("/editor")
 def editor():
     if not get_access_token(): 
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
     return render_template(
         "index.html", 
         page=2, 
@@ -461,7 +467,7 @@ def preview():
         if wb:
             wb.close()
         flash("System error: Worksheet data stream is unavailable.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
 
     ws = wb[sheet_name]
     headers = {str(c.value).strip(): idx for idx, c in enumerate(ws[1], start=1) if c.value is not None}
@@ -502,18 +508,74 @@ def preview():
         preview_data_json=json.dumps(preview_data)
     )
 
+@app.route("/send-test", methods=["POST"])
+def send_test():
+    access_token = get_access_token()
+    if not access_token: 
+        return jsonify({"success": False, "error": "Session expired. Re-authenticate."})
+    
+    cache = load_cache()
+    msal_app = get_msal_app(cache)
+    
+    # 1. Pylance Fix: Check if msal_app is None
+    if msal_app is None:
+        return jsonify({"success": False, "error": "MSAL App not configured."})
+        
+    accounts = msal_app.get_accounts()
+    if not accounts: 
+        return jsonify({"success": False, "error": "Microsoft account not found."})
+    
+    user_email = accounts[0].get("username")
+    data = request.json
+    
+    # 2. Pylance Fix: Check if data payload is None
+    if data is None:
+        return jsonify({"success": False, "error": "Invalid request payload."})
+        
+    subject = data.get("subject", "Test Email")
+    html = data.get("html", "")
+    
+    atts = session.get("attachments", [])
+    b64_attachments = []
+    for filename in atts:
+        filepath = UPLOAD_DIR / filename
+        if filepath.exists():
+            with open(filepath, "rb") as f:
+                b64_attachments.append({
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": filename,
+                    "contentBytes": base64.b64encode(f.read()).decode("utf-8")
+                })
+    
+    message = {
+        "message": {
+            "subject": "[TEST] " + subject,
+            "body": {"contentType": "HTML", "content": html},
+            "toRecipients": [{"emailAddress": {"address": user_email}}]
+        }
+    }
+    if b64_attachments: 
+        message["message"]["attachments"] = b64_attachments
+    
+    headers_http = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+    resp = requests.post("https://graph.microsoft.com/v1.0/me/sendMail", headers=headers_http, json=message, timeout=30)
+    
+    if resp.status_code == 202:
+        return jsonify({"success": True, "email": user_email})
+    return jsonify({"success": False, "error": resp.text})
+
 @app.route("/start-send", methods=["POST"])
 def start_send():
     access_token = get_access_token()
     if not access_token:
         flash("Authentication expired.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
 
     # Extract filename on the main thread
     excel_filename = session.get("excel_filename")
     if not isinstance(excel_filename, str) or not excel_filename.strip():
         flash("Excel file data lost. Please restart your campaign.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _anchor="campaigns"))
 
     task_id = str(uuid.uuid4())
     active_tasks[task_id] = {

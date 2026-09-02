@@ -796,3 +796,143 @@ input[type="password"] { letter-spacing: 2px; }
 [data-theme="dark"] .CodeMirror-cursor {
     border-left: 1px solid #ffffff !important;
 }
+
+/* Drag and Drop Uploads */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 35px 20px;
+    text-align: center;
+    background: var(--box-bg);
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+    position: relative;
+}
+
+.drop-zone:hover, .drop-zone.dragover {
+    background: var(--light-blue);
+    border-color: var(--g-blue);
+}
+
+.drop-zone input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* WYSIWYG Toolbar */
+.toolbar {
+    background: var(--box-bg);
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.toolbar-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--g-text);
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.toolbar-btn:hover {
+    background: var(--light-blue);
+    color: var(--g-blue);
+}
+
+.editor-wrapper {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.editor-wrapper .wysiwyg, .editor-wrapper .html-editor {
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+/* Floating Overlay Notifications (Toast) */
+.flash-container {
+    position: fixed;
+    top: 90px; /* bottom: 30px; */
+    right: 30px; /* left: 30px; */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none; /* Let clicks pass through the container box */
+}
+
+.flash { 
+    padding: 16px 20px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    min-width: 280px;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    pointer-events: auto; /* Make the actual alert clickable */
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    margin-bottom: 0; /* Override old margin */
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .flash {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Campaign Details Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease forwards;
+}
+
+.modal-overlay.hidden {
+    display: none !important;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.campaign-item.clickable:hover {
+    border-color: var(--g-blue);
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

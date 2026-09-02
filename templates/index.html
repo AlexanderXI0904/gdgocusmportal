@@ -41,8 +41,8 @@
 
 <div class="app">
 
-    <!-- Flash Messages -->
-    <div style="max-width: 1000px; margin: 15px auto; width: 100%; box-sizing: border-box; padding: 0 20px;">
+    <!-- Floating Flash Messages -->
+    <div class="flash-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -105,7 +105,6 @@
 
         <div class="campaigns-header">
             <h2>Your Campaigns</h2>
-            <button class="add-campaign-btn" onclick="toggleNewCampaign()">+</button>
         </div>
 
         <ul id="campaign-list">
@@ -115,8 +114,20 @@
             </li>
         </ul>
 
-        <div id="new-campaign-container"
-            class="mt-50 {% if not (authenticated or excel_filename or sheets) %}hidden{% endif %}">
+        <!-- Campaign Details Modal -->
+        <div id="campaign-modal" class="modal-overlay hidden">
+            <div class="modal-content card">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <h2 id="modal-campaign-title" style="margin: 0; color: var(--g-blue);">Campaign Details</h2>
+                    <button class="button outline" onclick="closeCampaignModal()" style="padding: 6px 12px;">✕ Close</button>
+                </div>
+                <div class="recipients-scroll-box" style="max-height: 400px; background: var(--box-bg); padding: 0;">
+                    <ul id="modal-log-list" style="list-style: none; margin: 0; padding: 0;"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="new-campaign-container" class="mt-50">
 
             <!-- Microsoft Authentication -->
             <section class="card">
@@ -208,15 +219,18 @@
                     method="POST"
                     enctype="multipart/form-data">
 
-                    <input
-                        type="file"
-                        name="file"
-                        accept=".xlsx,.xlsm"
-                        required
-                        style="margin-bottom: 15px; color: var(--g-text);"
-                    >
-
-                    <button type="submit" class="button primary">
+                    <div class="drop-zone" id="excel-drop-zone">
+                        <span id="excel-file-name" style="color: var(--text-muted); font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">
+                            <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px; margin-right: 8px;">
+                                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Drop Excel file here or click to browse
+                        </span>
+                        <input type="file" name="file" accept=".xlsx,.xlsm" required 
+                            onchange="document.getElementById('excel-file-name').innerHTML = '<span style=\'color: var(--g-blue);\'>✓ ' + (this.files[0]?.name || '') + '</span>'">
+                    </div>
+                    <button type="submit" class="button primary" style="margin-top: 15px; width: 100%;">
                         Upload Excel
                     </button>
                 </form>
@@ -323,7 +337,7 @@
                     style="padding: 10px 20px; font-weight: bold; margin-right: 10px;"
                     onclick="document.getElementById('importCampaignFile').click()"
                 >
-                    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="margin-right: 6px;">
                         <path
                             d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"
                             fill="none"
@@ -342,7 +356,7 @@
                     style="padding: 10px 20px; font-weight: bold;"
                     onclick="exportCampaign()"
                 >
-                    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="margin-right: 6px;">
                         <path
                             d="M5 4h11l3 3v13H5V4z"
                             fill="none"
@@ -429,12 +443,16 @@
                         </div>
                     {% endif %}
 
-                    <input
-                        type="file"
-                        name="attachments"
-                        multiple
-                        style="color: var(--g-text);"
-                    >
+                    <div class="drop-zone" id="att-drop-zone" style="padding: 20px;">
+                        <span id="att-file-name" style="color: var(--text-muted); font-weight: bold; display: flex; align-items: center; justify-content: center;">
+                            <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; margin-right: 6px;">
+                                <path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Drop attachments here or click to browse
+                        </span>
+                        <input type="file" name="attachments" multiple 
+                            onchange="document.getElementById('att-file-name').innerHTML = '<span style=\'color: var(--g-blue);\'>✓ ' + this.files.length + ' file(s) selected</span>'">
+                    </div>
 
                     <p
                         style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;"
@@ -548,21 +566,24 @@
                     </div>
                 </div>
 
-                <div id="wysiwygEditor" class="wysiwyg" contenteditable="true">
-                    <p>Greetings,</p>
-                    <p><strong>{{ "{{" }}CompanyName{{ "}}" }}</strong></p>
-                    <p>
-                        Best regards,<br>
-                        GDGoC USM
-                    </p>
-                </div>
+                <div class="editor-wrapper">
+                    <div class="toolbar" id="editor-toolbar">
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('bold', false, null)"><b>B</b></button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('italic', false, null)"><i>I</i></button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('underline', false, null)"><u>U</u></button>
+                        <button type="button" class="toolbar-btn" onclick="const url=prompt('Enter URL:'); if(url) document.execCommand('createLink', false, url);"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align: text-bottom; width: 14px; height: 14px; margin-right: 4px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Link</button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('insertUnorderedList', false, null)">• Bullet List</button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('removeFormat', false, null)">✕ Clear Format</button>
+                    </div>
 
-                <textarea
-                    id="htmlEditor"
-                    name="html"
-                    class="html-editor"
-                    hidden
-                ></textarea>
+                    <div id="wysiwygEditor" class="wysiwyg" contenteditable="true">
+                        <p>Greetings,</p>
+                        <p><strong>{{ "{{" }}CompanyName{{ "}}" }}</strong></p>
+                        <p>Best regards,<br>GDGoC USM</p>
+                    </div>
+
+                    <textarea id="htmlEditor" name="html" class="html-editor" hidden></textarea>
+                </div>
 
             </section>
 
@@ -613,6 +634,12 @@
                 </div>
 
                 <div style="display: flex; gap: 10px;">
+                    <button type="button" class="button outline" style="padding: 6px 16px; margin-right: 10px; display: inline-flex; align-items: center;" onclick="sendTestEmail()" id="test-email-btn">
+                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Send Test to Me
+                    </button>
                     <button
                         type="button"
                         class="button outline"
@@ -975,7 +1002,8 @@
                                     minute: '2-digit'
                                 }),
                                 sent: data.sent,
-                                failed: data.failed
+                                failed: data.failed,
+                                results: data.results
                             });
 
                             sessionStorage.setItem(
@@ -1253,6 +1281,15 @@
     document.addEventListener('DOMContentLoaded', () => {
         updateThemeIcon();
 
+        // Auto-dismiss Flash Messages
+        setTimeout(() => {
+            document.querySelectorAll('.flash').forEach(el => {
+                el.style.transition = "opacity 0.5s ease";
+                el.style.opacity = "0";
+                setTimeout(() => el.remove(), 500);
+            });
+        }, 4500);
+
         const bodyData = document.body.dataset;
         const page = parseInt(bodyData.page);
 
@@ -1274,48 +1311,27 @@
 
                     campaigns.forEach((campaign, index) => {
                         list.innerHTML += `
-                            <li class="campaign-item">
+                            <li class="campaign-item clickable" onclick="viewCampaignDetails(${index})" style="align-items: center;">
                                 <span>
-                                    <strong
-                                        style="color: var(--g-blue);
-                                               font-size: 1.1rem;"
-                                    >
+                                    <strong style="color: var(--g-blue); font-size: 1.1rem;">
                                         Campaign ${index + 1}
                                     </strong>
-
-                                    <span
-                                        style="color: var(--text-muted);
-                                               font-size: 0.9rem;
-                                               margin-left: 10px;"
-                                    >
+                                    <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 10px;">
                                         ${campaign.date}
                                     </span>
                                 </span>
-
-                                <span
-                                    style="background: var(--box-bg);
-                                           padding: 5px 15px;
-                                           border-radius: 20px;
-                                           font-size: 0.9rem;"
-                                >
-                                    <strong style="color: var(--g-green)">
-                                        Sent: ${campaign.sent}
-                                    </strong>
-
-                                    &nbsp;|&nbsp;
-
-                                    <strong style="color: var(--g-red)">
-                                        Failed: ${campaign.failed}
-                                    </strong>
+                                <span style="display: flex; align-items: center; gap: 15px;">
+                                    <span style="background: var(--box-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                        <strong style="color: var(--g-green)">Sent: ${campaign.sent}</strong>
+                                        &nbsp;|&nbsp;
+                                        <strong style="color: var(--g-red)">Failed: ${campaign.failed}</strong>
+                                    </span>
+                                    <button class="button secondary" style="padding: 5px 12px; font-size: 0.85rem;">View</button>
                                 </span>
                             </li>
                         `;
                     });
                 }
-            }
-
-            if (bodyData.hasConfig === 'true') {
-                document.getElementById('campaigns')?.scrollIntoView();
             }
         }
 
@@ -1421,14 +1437,6 @@
     let currentPreviewIndex = 0;
     let previewData = [];
 
-
-    function toggleNewCampaign() {
-        document
-            .getElementById('new-campaign-container')
-            .classList.remove('hidden');
-    }
-
-
     function scrollToCampaigns() {
         document
             .getElementById('campaigns')
@@ -1527,12 +1535,14 @@
         const visual = document.getElementById('wysiwygEditor');
         const textarea = document.getElementById('htmlEditor');
         const button = document.getElementById('editorToggle');
+        const toolbar = document.getElementById('editor-toolbar');
 
         if (!htmlMode) {
             textarea.value = visual.innerHTML;
             textarea.removeAttribute('hidden');
             textarea.style.display = 'block';
             visual.style.display = 'none';
+            if (toolbar) toolbar.style.display = 'none';
 
             codeMirrorEditor = CodeMirror.fromTextArea(textarea, {
                 mode: 'htmlmixed',
@@ -1560,6 +1570,7 @@
             textarea.style.display = 'none';
             textarea.setAttribute('hidden', 'hidden');
             visual.style.display = 'block';
+            if (toolbar) toolbar.style.display = 'flex';
 
             button.innerText = 'HTML View';
             htmlMode = false;
@@ -1567,8 +1578,42 @@
     }
 
     // ============================================================
-    // Campaign Export / Import
+    // Campaign Export / Import & Test Action
     // ============================================================
+
+    function sendTestEmail() {
+        const btn = document.getElementById('test-email-btn');
+        const defaultHTML = `<svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Send Test to Me`;
+        
+        btn.innerHTML = `<svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M12 2v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Sending...`;
+        btn.disabled = true;
+        
+        const subject = document.getElementById('preview-subject-display').innerText;
+        const html = document.getElementById('preview-body-display').innerHTML;
+        
+        fetch('/send-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject: subject, html: html })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                btn.innerHTML = `<svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Sent to ${data.email}`;
+                btn.style.color = "var(--g-green)";
+                btn.style.borderColor = "var(--g-green)";
+            } else {
+                alert("Failed to send test email: " + data.error);
+                btn.innerHTML = defaultHTML;
+            }
+            setTimeout(() => {
+                btn.innerHTML = defaultHTML;
+                btn.disabled = false;
+                btn.style.color = "";
+                btn.style.borderColor = "";
+            }, 5000);
+        });
+    }
 
     function exportCampaign() {
         const data = {
@@ -1843,6 +1888,40 @@
             isScrolling = true;
         }
     });
+
+    // ============================================================
+    // Campaign Details Modal
+    // ============================================================
+    function viewCampaignDetails(index) {
+        const campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
+        const campaign = campaigns[index];
+        if (!campaign) return;
+
+        document.getElementById('modal-campaign-title').innerText = `Campaign ${index + 1} Details`;
+        
+        const logList = document.getElementById('modal-log-list');
+        logList.innerHTML = '';
+        
+        if (campaign.results && campaign.results.length > 0) {
+            campaign.results.forEach(res => {
+                const color = res.status === 'Sent' ? 'var(--g-green)' : 'var(--g-red)';
+                logList.innerHTML += `
+                    <li style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                        <span style="color: var(--g-text);">${res.email}</span>
+                        <strong style="color: ${color};">${res.status}</strong>
+                    </li>
+                `;
+            });
+        } else {
+            logList.innerHTML = `<li style="padding: 15px; color: var(--text-muted); text-align: center;">No recipient details recorded.</li>`;
+        }
+
+        document.getElementById('campaign-modal').classList.remove('hidden');
+    }
+
+    function closeCampaignModal() {
+        document.getElementById('campaign-modal').classList.add('hidden');
+    }
 </script>
 </body>
 </html>
