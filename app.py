@@ -323,6 +323,11 @@ def index():
         excel_filename=filename if isinstance(filename, str) else None
     )
 
+@app.route("/about")
+def about():
+    # Pass 'about' as the active_page so Jinja highlights the correct tab
+    return render_template("about.html", active_page="about")
+
 @app.route("/save-ms-settings", methods=["POST"])
 def save_ms_settings():
     settings = load_settings()

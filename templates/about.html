@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - GDGoC Email Sender</title>
+    
+    <script>
+        const savedTheme = localStorage.getItem('gdgoc_theme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header class="g-header">
+        <div class="header-left">
+            <div class="user-logo">
+                <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
+            </div>
+            
+            <nav class="top-nav">
+                <a href="{{ url_for('index') }}" class="nav-link {% if active_page|default('home') == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('about') }}" class="nav-link {% if active_page|default('home') == 'about' %}active{% endif %}">About</a>
+            </nav>
+        </div>
+
+        <div class="g-logo">
+            <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo">
+        </div>
+    </header>
+
+    <div class="app main" style="margin-top: 60px;">
+        <div class="page-header" style="margin-bottom: 30px;">
+            <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">About This Project</h1>
+            <p style="color: var(--text-muted); margin: 0;">GDGoC USM Mass Email Application Infrastructure</p>
+        </div>
+
+        <section class="card" style="line-height: 1.6;">
+            <h2 style="color: var(--g-text); margin-top: 0;">Overview</h2>
+            <p>
+                The GDGoC Email Application is a custom-built solution designed to streamline personalized mass communication. Built using Python, Flask, and the Microsoft Graph API, this platform enables seamless authentication and efficient dispatch of batch emails directly from Excel payloads.
+            </p>
+
+            <h3 style="color: var(--g-text); margin-top: 25px;">Key Features</h3>
+            <ul style="color: var(--text-muted); padding-left: 20px;">
+                <li style="margin-bottom: 8px;"><strong>Microsoft Graph Integration:</strong> Enterprise-grade security and dispatch reliability.</li>
+                <li style="margin-bottom: 8px;"><strong>Dynamic Fields:</strong> Automatic mapping of `{{ "{{" }}Columns{{ "}}" }}` directly from uploaded `.xlsx` data streams.</li>
+                <li style="margin-bottom: 8px;"><strong>Live Visual Editor:</strong> CodeMirror integration enabling seamless toggle between HTML and Rich Text view.</li>
+                <li style="margin-bottom: 8px;"><strong>Background Processing:</strong> Asynchronous dispatch with real-time progress polling, ensuring the browser remains unblocked during heavy loads.</li>
+            </ul>
+
+            <h3 style="color: var(--g-text); margin-top: 25px;">Security & Data Handling</h3>
+            <p style="color: var(--text-muted);">
+                Excel files and attachments are securely cached in a temporary directory and automatically purged upon campaign completion or application termination. Authentication relies on volatile memory states and strict MSAL standard protocols.
+            </p>
+        </section>
+
+        <!-- Special Thanks Section -->
+        <section class="card" style="text-align: center; padding: 40px 20px;">
+            <h2 style="color: var(--g-text); margin-top: 0; margin-bottom: 30px;">Special Thanks</h2>
+            
+            <div style="display: inline-block;">
+                <img 
+                    src="{{ url_for('static', filename='profile.png') }}" 
+                    alt="Profile Picture" 
+                    onerror="this.src='https://ui-avatars.com/api/?name=Your+Name&background=e8f0fe&color=4285f4&size=150'"
+                    style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); margin-bottom: 15px; background: var(--box-bg);"
+                >
+                
+                <h3 style="margin: 0; color: var(--g-blue); font-size: 1.4rem;">Ms. Lim Zhi Ying</h3>
+                <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 1rem;">Co-Lead (Internal Operations & Member Engagement) of GDGoC USM</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+
+    <script>
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const themeButton = document.getElementById('theme-toggle');
+            
+            themeButton.innerHTML = isDark
+                ? `<svg class="theme-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`
+                : `<svg class="theme-icon" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        }
+
+        function toggleTheme() {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('gdgoc_theme', newTheme);
+            updateThemeIcon();
+        }
+
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
+</body>
+</html>

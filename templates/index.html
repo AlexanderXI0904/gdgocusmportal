@@ -30,8 +30,20 @@
 >
 
 <header class="g-header">
-    <div class="user-logo">
-        <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
+    <div class="header-left">
+        <div class="user-logo">
+            <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
+        </div>
+        
+        <!-- Navigation Menu -->
+        <nav class="top-nav">
+            <a href="{{ url_for('index') }}" class="nav-link {% if active_page|default('home') == 'home' %}active{% endif %}">
+                Home
+            </a>
+            <a href="{{ url_for('about') }}" class="nav-link {% if active_page|default('home') == 'about' %}active{% endif %}">
+                About
+            </a>
+        </nav>
     </div>
 
     <div class="g-logo">
@@ -41,8 +53,8 @@
 
 <div class="app">
 
-    <!-- Floating Flash Messages -->
-    <div class="flash-container">
+    <!-- Flash Messages -->
+    <div style="max-width: 1000px; margin: 15px auto; width: 100%; box-sizing: border-box; padding: 0 20px;">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -96,7 +108,8 @@
         </p>
 
         <button class="get-started-btn" onclick="scrollToCampaigns()">
-            Get started →
+            Get started 
+            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-left: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
     </div>
 
@@ -105,6 +118,9 @@
 
         <div class="campaigns-header">
             <h2>Your Campaigns</h2>
+            <button class="add-campaign-btn" onclick="toggleNewCampaign()">
+                <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
         </div>
 
         <ul id="campaign-list">
@@ -114,20 +130,8 @@
             </li>
         </ul>
 
-        <!-- Campaign Details Modal -->
-        <div id="campaign-modal" class="modal-overlay hidden">
-            <div class="modal-content card">
-                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
-                    <h2 id="modal-campaign-title" style="margin: 0; color: var(--g-blue);">Campaign Details</h2>
-                    <button class="button outline" onclick="closeCampaignModal()" style="padding: 6px 12px;">✕ Close</button>
-                </div>
-                <div class="recipients-scroll-box" style="max-height: 400px; background: var(--box-bg); padding: 0;">
-                    <ul id="modal-log-list" style="list-style: none; margin: 0; padding: 0;"></ul>
-                </div>
-            </div>
-        </div>
-
-        <div id="new-campaign-container" class="mt-50">
+        <div id="new-campaign-container"
+            class="mt-50 {% if not (authenticated or excel_filename or sheets) %}hidden{% endif %}">
 
             <!-- Microsoft Authentication -->
             <section class="card">
@@ -142,9 +146,12 @@
                     </div>
 
                     {% if authenticated %}
-                        <span class="status success">● Authenticated</span>
+                        <span class="status success" style="display: inline-flex; align-items: center;">
+                            <svg class="button-icon" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Authenticated
+                        </span>
                     {% else %}
-                        <span class="status">● Not authenticated</span>
+                        <span class="status">Not authenticated</span>
                     {% endif %}
                 </div>
 
@@ -182,8 +189,9 @@
                     <div class="auth-row">
 
                         {% if authenticated %}
-                            <div class="authenticated-box">
-                                ✓ Microsoft account authenticated
+                            <div class="authenticated-box" style="display: flex; align-items: center;">
+                                <svg class="button-icon" viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-right: 8px;"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Microsoft account authenticated
                             </div>
 
                             <a href="{{ url_for('logout') }}" class="button outline">
@@ -211,7 +219,10 @@
                     </div>
 
                     {% if excel_filename %}
-                        <span class="status success">✓ {{ excel_filename }}</span>
+                        <span class="status success" style="display: inline-flex; align-items: center;">
+                            <svg class="button-icon" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {{ excel_filename }}
+                        </span>
                     {% endif %}
                 </div>
 
@@ -228,7 +239,7 @@
                             Drop Excel file here or click to browse
                         </span>
                         <input type="file" name="file" accept=".xlsx,.xlsm" required 
-                            onchange="document.getElementById('excel-file-name').innerHTML = '<span style=\'color: var(--g-blue);\'>✓ ' + (this.files[0]?.name || '') + '</span>'">
+                            onchange="document.getElementById('excel-file-name').innerHTML = '<span style=\'color: var(--g-blue); display: flex; align-items: center; justify-content: center;\'><svg class=\'button-icon\' viewBox=\'0 0 24 24\' style=\'width: 18px; height: 18px; margin-right: 8px;\'><path d=\'M5 13l4 4L19 7\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg>' + (this.files[0]?.name || '') + '</span>'">
                     </div>
                     <button type="submit" class="button primary" style="margin-top: 15px; width: 100%;">
                         Upload Excel
@@ -291,7 +302,8 @@
                     <a href="{{ url_for('editor') }}"
                         class="button primary"
                         style="width: 100%;">
-                        Continue to Email Editor →
+                        Continue to Email Editor 
+                        <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-left: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </a>
                 </div>
 
@@ -399,7 +411,7 @@
                             type="text"
                             name="subject"
                             id="subject"
-                            placeholder="Sponsorship Invitation"
+                            placeholder="Invitation"
                             required
                         >
                     </div>
@@ -432,11 +444,11 @@
 
                                     <span
                                         class="remove"
-                                        style="cursor: pointer; padding: 0 4px;"
+                                        style="cursor: pointer; padding: 0 4px; display: inline-flex; align-items: center;"
                                         onclick="removeAttachment('{{ att }}', 'chip-{{ loop.index }}')"
                                         title="Remove attachment"
                                     >
-                                        ×
+                                        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                     </span>
                                 </div>
                             {% endfor %}
@@ -451,7 +463,7 @@
                             Drop attachments here or click to browse
                         </span>
                         <input type="file" name="attachments" multiple 
-                            onchange="document.getElementById('att-file-name').innerHTML = '<span style=\'color: var(--g-blue);\'>✓ ' + this.files.length + ' file(s) selected</span>'">
+                            onchange="document.getElementById('att-file-name').innerHTML = '<span style=\'color: var(--g-blue); display: flex; align-items: center; justify-content: center;\'><svg viewBox=\'0 0 24 24\' style=\'width: 18px; height: 18px; margin-right: 6px;\'><path d=\'M5 13l4 4L19 7\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg>' + this.files.length + ' file(s) selected</span>'">
                     </div>
 
                     <p
@@ -572,8 +584,8 @@
                         <button type="button" class="toolbar-btn" onclick="document.execCommand('italic', false, null)"><i>I</i></button>
                         <button type="button" class="toolbar-btn" onclick="document.execCommand('underline', false, null)"><u>U</u></button>
                         <button type="button" class="toolbar-btn" onclick="const url=prompt('Enter URL:'); if(url) document.execCommand('createLink', false, url);"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align: text-bottom; width: 14px; height: 14px; margin-right: 4px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Link</button>
-                        <button type="button" class="toolbar-btn" onclick="document.execCommand('insertUnorderedList', false, null)">• Bullet List</button>
-                        <button type="button" class="toolbar-btn" onclick="document.execCommand('removeFormat', false, null)">✕ Clear Format</button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('insertUnorderedList', false, null)"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align: text-bottom; width: 14px; height: 14px; margin-right: 4px;"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>List</button>
+                        <button type="button" class="toolbar-btn" onclick="document.execCommand('removeFormat', false, null)"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align: text-bottom; width: 14px; height: 14px; margin-right: 4px;"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Clear</button>
                     </div>
 
                     <div id="wysiwygEditor" class="wysiwyg" contenteditable="true">
@@ -589,11 +601,13 @@
 
             <div class="bottom-actions">
                 <a href="{{ url_for('index') }}" class="button outline">
-                    ← Back to Settings
+                    <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-right: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Back to Settings
                 </a>
 
                 <button type="submit" class="button primary">
-                    Preview Email →
+                    Preview Email 
+                    <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-left: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
             </div>
 
@@ -621,7 +635,15 @@
 
             <div class="card-header"
                 style="display: flex; justify-content: space-between; align-items: center;">
-
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="button outline" style="padding: 6px 16px; margin-right: 10px; display: inline-flex; align-items: center;" onclick="sendTestEmail()" id="test-email-btn">
+                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Send Test to Me
+                    </button>
+                </div>
+                
                 <div>
                     <h2>Live Email Preview</h2>
 
@@ -634,28 +656,24 @@
                 </div>
 
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="button outline" style="padding: 6px 16px; margin-right: 10px; display: inline-flex; align-items: center;" onclick="sendTestEmail()" id="test-email-btn">
-                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin-right: 6px;">
-                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Send Test to Me
-                    </button>
                     <button
                         type="button"
                         class="button outline"
-                        style="padding: 6px 16px;"
+                        style="padding: 6px 16px; display: inline-flex; align-items: center;"
                         onclick="changePreview(-1)"
                     >
-                        ← Prev
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        Prev
                     </button>
 
                     <button
                         type="button"
                         class="button outline"
-                        style="padding: 6px 16px;"
+                        style="padding: 6px 16px; display: inline-flex; align-items: center;"
                         onclick="changePreview(1)"
                     >
-                        Next →
+                        Next
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-left: 4px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                 </div>
             </div>
@@ -820,7 +838,8 @@
 
         <div class="bottom-actions">
             <a href="{{ url_for('editor') }}" class="button outline">
-                ← Back to Email Editor
+                <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; margin-right: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Email Editor
             </a>
         </div>
 
@@ -1003,7 +1022,7 @@
                                 }),
                                 sent: data.sent,
                                 failed: data.failed,
-                                results: data.results
+                                results: data.results // Storing details for modal view
                             });
 
                             sessionStorage.setItem(
@@ -1174,8 +1193,9 @@
             chip.innerHTML = `
                 <span>${email}</span>
                 <span class="remove"
-                      onclick="this.parentElement.remove()">
-                    ×
+                      onclick="this.parentElement.remove()"
+                      style="display: inline-flex; align-items: center;">
+                    <svg viewBox="0 0 24 24" style="width: 12px; height: 12px;"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
             `;
 
@@ -1311,22 +1331,39 @@
 
                     campaigns.forEach((campaign, index) => {
                         list.innerHTML += `
-                            <li class="campaign-item clickable" onclick="viewCampaignDetails(${index})" style="align-items: center;">
+                            <li class="campaign-item" style="align-items: center;">
                                 <span>
-                                    <strong style="color: var(--g-blue); font-size: 1.1rem;">
+                                    <strong
+                                        style="color: var(--g-blue);
+                                               font-size: 1.1rem;"
+                                    >
                                         Campaign ${index + 1}
                                     </strong>
-                                    <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 10px;">
+
+                                    <span
+                                        style="color: var(--text-muted);
+                                               font-size: 0.9rem;
+                                               margin-left: 10px;"
+                                    >
                                         ${campaign.date}
                                     </span>
                                 </span>
-                                <span style="display: flex; align-items: center; gap: 15px;">
-                                    <span style="background: var(--box-bg); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
-                                        <strong style="color: var(--g-green)">Sent: ${campaign.sent}</strong>
-                                        &nbsp;|&nbsp;
-                                        <strong style="color: var(--g-red)">Failed: ${campaign.failed}</strong>
-                                    </span>
-                                    <button class="button secondary" style="padding: 5px 12px; font-size: 0.85rem;">View</button>
+
+                                <span
+                                    style="background: var(--box-bg);
+                                           padding: 5px 15px;
+                                           border-radius: 20px;
+                                           font-size: 0.9rem;"
+                                >
+                                    <strong style="color: var(--g-green)">
+                                        Sent: ${campaign.sent}
+                                    </strong>
+
+                                    &nbsp;|&nbsp;
+
+                                    <strong style="color: var(--g-red)">
+                                        Failed: ${campaign.failed}
+                                    </strong>
                                 </span>
                             </li>
                         `;
@@ -1437,6 +1474,7 @@
     let currentPreviewIndex = 0;
     let previewData = [];
 
+
     function scrollToCampaigns() {
         document
             .getElementById('campaigns')
@@ -1458,7 +1496,6 @@
         let liveHtml = document.querySelector("input[name='html']").value || "";
 
         // Safely iterate through fetched Excel data and replace placeholders using Regex
-        // This handles cases where users accidentally add spaces like {{ CompanyName }}
         for (const [col, val] of Object.entries(person.data)) {
             const safeCol = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp("\\{\\{\\s*" + safeCol + "\\s*\\}\\}", "g");
@@ -1495,7 +1532,8 @@
     // ============================================================
 
     function insertDynamic(colName) {
-        const value = "{{" + colName + "}}";
+        // Splitting the curly brackets completely prevents Jinja2 from parsing them!
+        const value = "{" + "{" + colName + "}" + "}";
         const subject = document.getElementById('subject');
 
 
@@ -1888,40 +1926,6 @@
             isScrolling = true;
         }
     });
-
-    // ============================================================
-    // Campaign Details Modal
-    // ============================================================
-    function viewCampaignDetails(index) {
-        const campaigns = JSON.parse(sessionStorage.getItem('gdgoc_campaigns') || '[]');
-        const campaign = campaigns[index];
-        if (!campaign) return;
-
-        document.getElementById('modal-campaign-title').innerText = `Campaign ${index + 1} Details`;
-        
-        const logList = document.getElementById('modal-log-list');
-        logList.innerHTML = '';
-        
-        if (campaign.results && campaign.results.length > 0) {
-            campaign.results.forEach(res => {
-                const color = res.status === 'Sent' ? 'var(--g-green)' : 'var(--g-red)';
-                logList.innerHTML += `
-                    <li style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                        <span style="color: var(--g-text);">${res.email}</span>
-                        <strong style="color: ${color};">${res.status}</strong>
-                    </li>
-                `;
-            });
-        } else {
-            logList.innerHTML = `<li style="padding: 15px; color: var(--text-muted); text-align: center;">No recipient details recorded.</li>`;
-        }
-
-        document.getElementById('campaign-modal').classList.remove('hidden');
-    }
-
-    function closeCampaignModal() {
-        document.getElementById('campaign-modal').classList.add('hidden');
-    }
 </script>
 </body>
 </html>
