@@ -13,6 +13,43 @@
     </script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        /* Faded Scroll Edges using CSS Masks for smooth theme transitions */
+        .scroll-fade-top, .scroll-fade-bottom {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background-color: var(--body-bg); /* Solid color transitions perfectly */
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .scroll-fade-top {
+            top: 70px;
+            -webkit-mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
+        }
+
+        .scroll-fade-bottom {
+            bottom: 0;
+            -webkit-mask-image: linear-gradient(to top, black 10%, transparent 100%);
+            mask-image: linear-gradient(to top, black 10%, transparent 100%);
+        }
+
+        /* Slide-In Animation Classes */
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
 </head>
 
 <body>
@@ -34,48 +71,100 @@
         </div>
     </header>
 
-    <div class="app main" style="margin-top: 60px;">
-        <div class="page-header" style="margin-bottom: 30px;">
-            <h1 style="color: var(--g-blue); margin: 0 0 10px 0;">About This Project</h1>
-            <p style="color: var(--text-muted); margin: 0;">GDGoC USM Mass Email Application Infrastructure</p>
+    <!-- Faded Edges Overlays -->
+    <div class="scroll-fade-top"></div>
+    <div class="scroll-fade-bottom"></div>
+
+    <div class="app main" style="max-width: 800px; margin: 80px auto; padding: 0 20px 100px 20px;">
+        
+        <!-- Seamless Header -->
+        <div style="margin-bottom: 50px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 15px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="url(#paint0_linear)"/>
+                    <defs>
+                        <linearGradient id="paint0_linear" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#4285F4" />
+                            <stop offset="0.33" stop-color="#EA4335" />
+                            <stop offset="0.66" stop-color="#F9AB00" />
+                            <stop offset="1" stop-color="#34A853" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1 style="color: var(--g-text); font-size: 3rem; margin: 0; font-family: 'GDGoCFont', sans-serif;">
+                    About This Project
+                </h1>
+            </div>
+            <p style="color: var(--g-blue); margin: 0; font-size: 1.25rem; font-weight: bold;">
+                GDGoC USM Mass Email Application
+            </p>
         </div>
 
-        <section class="card" style="line-height: 1.6;">
-            <h2 style="color: var(--g-text); margin-top: 0;">Overview</h2>
-            <p>
-                The GDGoC Email Application is a custom-built solution designed to streamline personalized mass communication. Built using Python, Flask, and the Microsoft Graph API, this platform enables seamless authentication and efficient dispatch of batch emails directly from Excel payloads.
+        <!-- Flowing Content Section -->
+        <div style="line-height: 1.8; font-size: 1.1rem;">
+            <p style="margin-top: 0; color: var(--g-text);">
+                The GDGoC USM Mass Email Application is an internal tool developed to make personalised bulk email communication simpler and more efficient.
+            </p>
+            <p style="color: var(--g-text);">
+                It allows committee members to prepare email campaigns using familiar tools such as Excel and HTML, while handling authentication, personalisation, and email delivery through Microsoft Graph.
             </p>
 
-            <h3 style="color: var(--g-text); margin-top: 25px;">Key Features</h3>
-            <ul style="color: var(--text-muted); padding-left: 20px;">
-                <li style="margin-bottom: 8px;"><strong>Microsoft Graph Integration:</strong> Enterprise-grade security and dispatch reliability.</li>
-                <li style="margin-bottom: 8px;"><strong>Dynamic Fields:</strong> Automatic mapping of `{{ "{{" }}Columns{{ "}}" }}` directly from uploaded `.xlsx` data streams.</li>
-                <li style="margin-bottom: 8px;"><strong>Live Visual Editor:</strong> CodeMirror integration enabling seamless toggle between HTML and Rich Text view.</li>
-                <li style="margin-bottom: 8px;"><strong>Background Processing:</strong> Asynchronous dispatch with real-time progress polling, ensuring the browser remains unblocked during heavy loads.</li>
+            <h3 style="color: var(--g-text); margin-top: 45px; font-size: 1.5rem; display: flex; align-items: center; gap: 12px;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--g-red); display: inline-block;"></span>
+                What it does
+            </h3>
+            <ul style="color: var(--text-muted); padding-left: 20px; margin-top: 15px;">
+                <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Personalised emails</strong> — Automatically inserts information from your Excel data into each email.</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Email editor</strong> — Create and customise messages using either a visual editor or HTML.</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Campaign management</strong> — Save and load email templates for reuse.</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Bulk dispatch</strong> — Process large batches of emails in the background while keeping track of sending progress.</li>
+                <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Microsoft integration</strong> — Uses Microsoft Entra ID and Microsoft Graph for secure account authentication and email delivery.</li>
             </ul>
 
-            <h3 style="color: var(--g-text); margin-top: 25px;">Security & Data Handling</h3>
-            <p style="color: var(--text-muted);">
-                Excel files and attachments are securely cached in a temporary directory and automatically purged upon campaign completion or application termination. Authentication relies on volatile memory states and strict MSAL standard protocols.
+            <h3 style="color: var(--g-text); margin-top: 45px; font-size: 1.5rem; display: flex; align-items: center; gap: 12px;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--g-yellow); display: inline-block;"></span>
+                Built for GDGoC USM
+            </h3>
+            <p style="color: var(--text-muted); margin-bottom: 0;">
+                This application was developed specifically to support the communication needs of Google Developer Group On Campus, Universiti Sains Malaysia (GDGoC USM), providing the committee with a more convenient way to manage recurring email campaigns.
             </p>
-        </section>
 
-        <!-- Special Thanks Section -->
-        <section class="card" style="text-align: center; padding: 40px 20px;">
-            <h2 style="color: var(--g-text); margin-top: 0; margin-bottom: 30px;">Special Thanks</h2>
+            <div style="margin-top: 45px; background: rgba(52, 168, 83, 0.08); border-left: 4px solid var(--g-green); padding: 20px 25px; border-radius: 0 8px 8px 0;">
+                <h3 style="color: var(--g-green); margin: 0 0 10px 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Internal Use
+                </h3>
+                <p style="color: var(--g-text); margin: 0; font-size: 1.05rem;">
+                    This application is intended for authorised GDGoC USM committee use.
+                </p>
+            </div>
+        </div>
+
+        <!-- Developed By Section (Flex Layout & Slide In) -->
+        <div class="slide-in-left" style="margin-top: 80px; padding-top: 50px; border-top: 1px solid var(--border-color);">
+            <h2 style="color: var(--text-muted); margin-top: 0; margin-bottom: 30px; font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'EditorFont', monospace;">
+                Developed by
+            </h2>
             
-            <div style="display: inline-block;">
+            <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
                 <img 
                     src="{{ url_for('static', filename='profile.png') }}" 
-                    alt="Profile Picture" 
-                    onerror="this.src='https://ui-avatars.com/api/?name=Your+Name&background=e8f0fe&color=4285f4&size=150'"
-                    style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); margin-bottom: 15px; background: var(--box-bg);"
+                    alt="GDGoC USM" 
+                    onerror="this.src='https://ui-avatars.com/api/?name=GDGoC+USM&background=e8f0fe&color=4285f4&size=150'"
+                    style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid var(--g-blue); background: var(--box-bg); flex-shrink: 0;"
                 >
                 
-                <h3 style="margin: 0; color: var(--g-blue); font-size: 1.4rem;">Ms. Lim Zhi Ying</h3>
-                <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 1rem;">Co-Lead (Internal Operations & Member Engagement) of GDGoC USM</p>
+                <div>
+                    <h3 style="margin: 0; color: var(--g-text); font-size: 1.5rem; line-height: 1.4;">
+                        Google Developer Group On Campus<br>
+                        <span style="color: var(--g-blue);">Universiti Sains Malaysia</span>
+                    </h3>
+                    <p style="color: var(--text-muted); margin: 8px 0 0 0; font-size: 1.05rem;">
+                        <i>Committee, Academic Session 2026/27</i>
+                    </p>
+                </div>
             </div>
-        </section>
+        </div>
     </div>
 
     <!-- Theme Toggle -->
@@ -103,7 +192,21 @@
             updateThemeIcon();
         }
 
-        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+
+            // Intersection Observer to trigger slide-in animation
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            const slideElements = document.querySelectorAll('.slide-in-left');
+            slideElements.forEach(el => observer.observe(el));
+        });
     </script>
 </body>
 </html>

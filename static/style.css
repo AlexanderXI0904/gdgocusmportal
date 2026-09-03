@@ -42,6 +42,13 @@
     --header-bg: #1a1a1d;
 }
 
+/* Universally synchronize all theme-related color shifts */
+* {
+    transition-property: background-color, color, border-color, fill, stroke;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+}
+
 /* Global Font Enforcement */
 body, input, button, select, textarea {
     font-family: 'GDGoCFont', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
