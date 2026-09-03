@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDGoC USM Portal</title>
+    
+    <script>
+        const savedTheme = localStorage.getItem('gdgoc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="g-header">
+        <div class="header-left">
+            <div class="user-logo">
+                <img src="{{ url_for('static', filename='left-logo.png') }}" alt="My Logo">
+            </div>
+            
+            <nav class="top-nav">
+                <a href="{{ url_for('home') }}" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('index') }}" class="nav-link {% if active_page == 'email' %}active{% endif %}">Email App</a>
+                <a href="{{ url_for('about') }}" class="nav-link {% if active_page == 'about' %}active{% endif %}">About</a>
+            </nav>
+        </div>
+        <div class="g-logo">
+            <img src="{{ url_for('static', filename='right-logo.png') }}" alt="GDGoC Logo">
+        </div>
+    </header>
+
+    <div class="app main" style="max-width: 1000px; margin: 60px auto; padding: 0 20px;">
+        
+        <!-- Hero Section -->
+        <div style="text-align: center; margin-bottom: 70px;">
+            <div class="sparkle-icon" style="margin: 0 auto 20px auto;">
+                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="url(#paint0_linear)"/>
+                    <defs>
+                        <linearGradient id="paint0_linear" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#4285F4" /><stop offset="0.33" stop-color="#EA4335" /><stop offset="0.66" stop-color="#F9AB00" /><stop offset="1" stop-color="#34A853" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 style="color: var(--g-text); font-size: 3rem; margin: 0 0 15px 0; font-family: 'GDGoCFont', sans-serif;">
+                GDGoC USM Internal Portal
+            </h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                Centralised workspace and automation hub powering Google Developer Group On Campus, Universiti Sains Malaysia.
+            </p>
+        </div>
+
+        <!-- Portal Apps Grid -->
+        <h2 style="color: var(--g-text); font-size: 1.5rem; margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+            Available Applications
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 60px;">
+            
+            <!-- Email App Card -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin: 0; transition: transform 0.2s;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(66, 133, 244, 0.1); display: flex; align-items: center; justify-content: center; color: var(--g-blue);">
+                            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </div>
+                        <h3 style="margin: 0; color: var(--g-text); font-size: 1.25rem;">Mass Email App</h3>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                        Automate personalized bulk outreach, map Excel data streams, and dispatch email campaigns securely via Microsoft Graph.
+                    </p>
+                </div>
+                <a href="{{ url_for('index') }}" class="button primary" style="text-decoration: none; text-align: center; justify-content: center; display: flex; align-items: center;">
+                    Open App
+                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-left: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+
+            <!-- Future App Placeholder Card -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin: 0; opacity: 0.7; border: 2px dashed var(--border-color);">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(150, 150, 150, 0.1); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        </div>
+                        <h3 style="margin: 0; color: var(--text-muted); font-size: 1.25rem;">More Tools Coming</h3>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                        Future committee automation utilities, resource trackers, and internal management tools will be hosted here.
+                    </p>
+                </div>
+                <span class="button outline" style="text-align: center; justify-content: center; display: flex; align-items: center; cursor: not-allowed; border-color: var(--border-color); color: var(--text-muted);">
+                    In Development
+                </span>
+            </div>
+
+        </div>
+
+        <!-- Quick Info Footer Strip -->
+        <div style="background: var(--box-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h4 style="margin: 0 0 5px 0; color: var(--g-text); font-size: 1.1rem;">Need assistance or want to contribute?</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Check out the architecture details and committee credits on the About page.</p>
+            </div>
+            <a href="{{ url_for('about') }}" class="button outline" style="text-decoration: none;">Explore About Portal</a>
+        </div>
+
+    </div>
+
+    <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+    <script>
+        function updateThemeIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const themeButton = document.getElementById('theme-toggle');
+            themeButton.innerHTML = isDark
+                ? `<svg class="theme-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`
+                : `<svg class="theme-icon" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        }
+        function toggleTheme() {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('gdgoc_theme', newTheme);
+            updateThemeIcon();
+        }
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
+</body>
+</html>

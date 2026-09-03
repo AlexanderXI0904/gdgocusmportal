@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - GDGoC Email Sender</title>
+    <title>GDGoC USM Portal</title>
     
     <script>
         const savedTheme = localStorage.getItem('gdgoc_theme') ||
@@ -15,27 +15,31 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* Faded Scroll Edges using CSS Masks for smooth theme transitions */
-        .scroll-fade-top, .scroll-fade-bottom {
+        /* Faded Scroll Edges */
+        .scroll-fade-top {
             position: fixed;
+            top: 70px;
             left: 0;
             width: 100%;
             height: 80px;
-            background-color: var(--body-bg); /* Solid color transitions perfectly */
+            background-color: var(--body-bg);
+            -webkit-mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
             pointer-events: none;
             z-index: 99;
         }
 
-        .scroll-fade-top {
-            top: 70px;
-            -webkit-mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
-            mask-image: linear-gradient(to bottom, black 10%, transparent 100%);
-        }
-
         .scroll-fade-bottom {
+            position: fixed;
             bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background-color: var(--body-bg);
             -webkit-mask-image: linear-gradient(to top, black 10%, transparent 100%);
             mask-image: linear-gradient(to top, black 10%, transparent 100%);
+            pointer-events: none;
+            z-index: 99;
         }
 
         /* Slide-In Animation Classes */
@@ -61,7 +65,8 @@
             </div>
             
             <nav class="top-nav">
-                <a href="{{ url_for('index') }}" class="nav-link {% if active_page|default('home') == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('home') }}" class="nav-link {% if active_page|default('home') == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('index') }}" class="nav-link {% if active_page|default('home') == 'email' %}active{% endif %}">Email App</a>
                 <a href="{{ url_for('about') }}" class="nav-link {% if active_page|default('home') == 'about' %}active{% endif %}">About</a>
             </nav>
         </div>
@@ -92,26 +97,26 @@
                     </defs>
                 </svg>
                 <h1 style="color: var(--g-text); font-size: 3rem; margin: 0; font-family: 'GDGoCFont', sans-serif;">
-                    About This Project
+                    About This Portal
                 </h1>
             </div>
             <p style="color: var(--g-blue); margin: 0; font-size: 1.25rem; font-weight: bold;">
-                GDGoC USM Mass Email Application
+                GDGoC USM Internal Portal
             </p>
         </div>
 
         <!-- Flowing Content Section -->
         <div style="line-height: 1.8; font-size: 1.1rem;">
             <p style="margin-top: 0; color: var(--g-text);">
-                The GDGoC USM Mass Email Application is an internal tool developed to make personalised bulk email communication simpler and more efficient.
+                The GDGoC USM Portal is a centralized workspace designed to host custom internal tools that streamline committee operations and automate repetitive technical workflows.
             </p>
             <p style="color: var(--g-text);">
-                It allows committee members to prepare email campaigns using familiar tools such as Excel and HTML, while handling authentication, personalisation, and email delivery through Microsoft Graph.
+                Currently, the portal features our flagship <strong>Mass Email Application</strong>—a robust tool that allows committee members to prepare and dispatch personalised bulk emails seamlessly using Excel, HTML, and Microsoft Graph.
             </p>
 
             <h3 style="color: var(--g-text); margin-top: 45px; font-size: 1.5rem; display: flex; align-items: center; gap: 12px;">
                 <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--g-red); display: inline-block;"></span>
-                What it does
+                Current Capabilities
             </h3>
             <ul style="color: var(--text-muted); padding-left: 20px; margin-top: 15px;">
                 <li style="margin-bottom: 12px;"><strong style="color: var(--g-text);">Personalised emails</strong> — Automatically inserts information from your Excel data into each email.</li>
@@ -126,7 +131,7 @@
                 Built for GDGoC USM
             </h3>
             <p style="color: var(--text-muted); margin-bottom: 0;">
-                This application was developed specifically to support the communication needs of Google Developer Group On Campus, Universiti Sains Malaysia (GDGoC USM), providing the committee with a more convenient way to manage recurring email campaigns.
+                This architecture was developed specifically to support the communication and operational needs of Google Developer Group On Campus, Universiti Sains Malaysia (GDGoC USM), providing the committee with a scalable foundation for future internal applications.
             </p>
 
             <div style="margin-top: 45px; background: rgba(52, 168, 83, 0.08); border-left: 4px solid var(--g-green); padding: 20px 25px; border-radius: 0 8px 8px 0;">
@@ -135,7 +140,7 @@
                     Internal Use
                 </h3>
                 <p style="color: var(--g-text); margin: 0; font-size: 1.05rem;">
-                    This application is intended for authorised GDGoC USM committee use.
+                    This application is strictly intended for authorised GDGoC USM committee use.
                 </p>
             </div>
         </div>

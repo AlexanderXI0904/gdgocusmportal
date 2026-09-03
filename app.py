@@ -291,6 +291,10 @@ def background_worker(task_id, access_token, subject_template, importance, html_
 # ROUTES
 # ============================================================
 @app.route("/")
+def home():
+    return render_template("home.html", active_page="home")
+
+@app.route("/email")
 def index():
     settings = load_settings()
     authenticated = bool(get_access_token())
@@ -298,7 +302,6 @@ def index():
     columns = []
 
     filename = session.get("excel_filename")
-    # Add strict string validation to the condition
     if isinstance(filename, str) and not (UPLOAD_DIR / filename).exists():
         session.pop("excel_filename", None)
         session.pop("sheet_name", None)
@@ -320,12 +323,12 @@ def index():
         sheets=sheets, 
         selected_sheet=session.get("sheet_name"), 
         columns=columns, 
-        excel_filename=filename if isinstance(filename, str) else None
+        excel_filename=filename if isinstance(filename, str) else None,
+        active_page="email"
     )
 
 @app.route("/about")
 def about():
-    # Pass 'about' as the active_page so Jinja highlights the correct tab
     return render_template("about.html", active_page="about")
 
 @app.route("/save-ms-settings", methods=["POST"])
@@ -414,6 +417,46 @@ def save_cc():
         save_settings(settings)
     return {"success": True}
 
+@app.route("/api/preview-data")
+def preview_data_api():
+    filename = session.get("excel_filename")
+    sheet_name = session.get("sheet_name")
+    email_column = session.get("email_column")
+    
+    if not filename or not sheet_name or not email_column:
+        return jsonify({"error": "Missing active dataset or email column mapping"}), 400
+        
+    wb = get_workbook()
+    if not wb:
+        return jsonify({"error": "Could not load the Excel file."}), 400
+        
+    if sheet_name not in wb.sheetnames:
+        wb.close()
+        return jsonify({"error": f"Worksheet '{sheet_name}' not found."}), 400
+        
+    sheet = wb[sheet_name]
+    
+    headers = []
+    for row in sheet.iter_rows(min_row=1, max_row=1, values_only=True):
+        headers = [str(c).strip() if c is not None else "" for c in row]
+        break
+    
+    preview_data = []
+    
+    # Removed max_row constraint to load all records for the preview carousel
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        if not any(row): continue
+        
+        row_dict = {headers[i]: str(val) if val is not None else "" for i, val in enumerate(row) if i < len(headers)}
+        
+        preview_data.append({
+            "email": row_dict.get(email_column, "Missing Email"),
+            "data": row_dict
+        })
+        
+    wb.close()
+    return jsonify(preview_data)
+
 @app.route("/api/remove-attachment", methods=["POST"])
 def api_remove_attachment():
     filename = request.form.get("filename")
@@ -446,6 +489,9 @@ def editor():
 
 @app.route("/preview", methods=["POST"])
 def preview():
+    # Save the selected email column into the session for the API to use
+    session["email_column"] = request.form.get("email_column")
+
     subject = request.form.get("subject", "").strip()
     importance = request.form.get("importance", "normal")
     html = request.form.get("html", "")

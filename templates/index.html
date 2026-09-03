@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>GDGoC Email Sender</title>
+    <title>GDGoC USM Portal</title>
 
     <script>
         const savedTheme = localStorage.getItem('gdgoc_theme') ||
@@ -15,12 +14,11 @@
 
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" media="print" onload="this.media='all'">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js" defer></script>
 </head>
 
 <body
@@ -37,12 +35,9 @@
         
         <!-- Navigation Menu -->
         <nav class="top-nav">
-            <a href="{{ url_for('index') }}" class="nav-link {% if active_page|default('home') == 'home' %}active{% endif %}">
-                Home
-            </a>
-            <a href="{{ url_for('about') }}" class="nav-link {% if active_page|default('home') == 'about' %}active{% endif %}">
-                About
-            </a>
+            <a href="{{ url_for('home') }}" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+            <a href="{{ url_for('index') }}" class="nav-link {% if active_page == 'email' %}active{% endif %}">Email App</a>
+            <a href="{{ url_for('about') }}" class="nav-link {% if active_page == 'about' %}active{% endif %}">About</a>
         </nav>
     </div>
 
@@ -1490,18 +1485,29 @@
 
 
         // ---------------- Page 3 ----------------
-
         if (page === 3) {
-            const jsonBlock =
-                document.getElementById('previewDataJson');
-
-            if (jsonBlock) {
-                previewData = JSON.parse(jsonBlock.textContent);
-
-                if (previewData.length > 0) {
-                    renderLivePreview();
-                }
-            }
+            const previewCounter = document.getElementById('preview-counter');
+            previewCounter.innerHTML = `<strong>Loading campaign data...</strong>`;
+            
+            // Fetch the massive Excel payload asynchronously 
+            fetch('/api/preview-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        previewCounter.innerHTML = `<strong style="color: var(--g-red);">Error: ${data.error}</strong>`;
+                        return;
+                    }
+                    
+                    previewData = data;
+                    if (previewData.length > 0) {
+                        currentPreviewIndex = 0;
+                        renderLivePreview();
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load preview data:", err);
+                    previewCounter.innerHTML = `<strong style="color: var(--g-red);">Failed to fetch data.</strong>`;
+                });
         }
     });
 
